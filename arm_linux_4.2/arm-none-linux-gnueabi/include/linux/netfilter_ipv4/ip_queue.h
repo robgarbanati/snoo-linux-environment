@@ -7,15 +7,7 @@
 #ifndef _IP_QUEUE_H
 #define _IP_QUEUE_H
 
-#ifdef __KERNEL__
-#ifdef DEBUG_IPQ
-#define QDEBUG(x...) printk(KERN_DEBUG ## x)
-#else
-#define QDEBUG(x...)
-#endif  /* DEBUG_IPQ */
-#else
 #include <net/if.h>
-#endif	/* ! __KERNEL__ */
 
 /* Messages sent from kernel */
 typedef struct ipq_packet_msg {
@@ -26,7 +18,7 @@ typedef struct ipq_packet_msg {
 	unsigned int hook;		/* Netfilter hook we rode in on */
 	char indev_name[IFNAMSIZ];	/* Name of incoming interface */
 	char outdev_name[IFNAMSIZ];	/* Name of outgoing interface */
-	unsigned short hw_protocol;	/* Hardware protocol (network order) */
+	__be16 hw_protocol;		/* Hardware protocol (network order) */
 	unsigned short hw_type;		/* Hardware type */
 	unsigned char hw_addrlen;	/* Hardware address length */
 	unsigned char hw_addr[8];	/* Hardware address */

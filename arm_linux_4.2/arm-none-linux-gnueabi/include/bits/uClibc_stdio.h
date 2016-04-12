@@ -55,17 +55,6 @@
 
 /**********************************************************************/
 /* Make sure defines related to large files are consistent. */
-#ifdef _LIBC
-
-#ifdef __UCLIBC_HAS_LFS__
-#undef __USE_LARGEFILE
-#undef __USE_LARGEFILE64
-#undef __USE_FILE_OFFSET64
-/* If we're actually building uClibc with large file support, only define... */
-#define __USE_LARGEFILE64	1
-#endif /* __UCLIBC_HAS_LFS__ */
-
-#else  /* not _LIBC */
 
 #ifndef __UCLIBC_HAS_LFS__
 #if defined(__LARGEFILE64_SOURCE) || defined(__USE_LARGEFILE64) || defined(__USE_FILE_OFFSET64)
@@ -73,7 +62,6 @@
 #endif
 #endif /* __UCLIBC_HAS_LFS__ */
 
-#endif /* _LIBC */
 /**********************************************************************/
 #ifdef __UCLIBC_HAS_WCHAR__
 
@@ -134,31 +122,39 @@
         __UCLIBC_MUTEX_AUTO_LOCK_VAR(__infunc_user_locking)
 
 #define __STDIO_AUTO_THREADLOCK(__stream)					\
-        __UCLIBC_MUTEX_AUTO_LOCK((__stream)->__lock, __infunc_user_locking,	\
+        __UCLIBC_IO_MUTEX_AUTO_LOCK((__stream)->__lock, __infunc_user_locking,	\
 	(__stream)->__user_locking)
 
 #define __STDIO_AUTO_THREADUNLOCK(__stream)					\
-        __UCLIBC_MUTEX_AUTO_UNLOCK((__stream)->__lock, __infunc_user_locking)
+        __UCLIBC_IO_MUTEX_AUTO_UNLOCK((__stream)->__lock, __infunc_user_locking)
 
 #define __STDIO_ALWAYS_THREADLOCK(__stream)					\
-        __UCLIBC_MUTEX_LOCK((__stream)->__lock)
+        __UCLIBC_IO_MUTEX_LOCK((__stream)->__lock)
 
 #define __STDIO_ALWAYS_THREADUNLOCK(__stream)					\
-        __UCLIBC_MUTEX_UNLOCK((__stream)->__lock)
+        __UCLIBC_IO_MUTEX_UNLOCK((__stream)->__lock)
 
 #define __STDIO_ALWAYS_THREADLOCK_CANCEL_UNSAFE(__stream)			\
-        __UCLIBC_MUTEX_LOCK_CANCEL_UNSAFE((__stream)->__lock)
+        __UCLIBC_IO_MUTEX_LOCK_CANCEL_UNSAFE((__stream)->__lock)
 
 #define __STDIO_ALWAYS_THREADTRYLOCK_CANCEL_UNSAFE(__stream)			\
-        __UCLIBC_MUTEX_TRYLOCK_CANCEL_UNSAFE((__stream)->__lock)
+        __UCLIBC_IO_MUTEX_TRYLOCK_CANCEL_UNSAFE((__stream)->__lock)
 
 #define __STDIO_ALWAYS_THREADUNLOCK_CANCEL_UNSAFE(__stream)			\
-        __UCLIBC_MUTEX_UNLOCK_CANCEL_UNSAFE((__stream)->__lock)
+        __UCLIBC_IO_MUTEX_UNLOCK_CANCEL_UNSAFE((__stream)->__lock)
 
 #ifdef __UCLIBC_HAS_THREADS__
 #define __STDIO_SET_USER_LOCKING(__stream)	((__stream)->__user_locking = 1)
 #else
 #define __STDIO_SET_USER_LOCKING(__stream)		((void)0)
+#endif
+
+#ifdef __UCLIBC_HAS_THREADS__
+#ifdef __USE_STDIO_FUTEXES__
+#define STDIO_INIT_MUTEX(M) _IO_lock_init(M)
+#else
+#define STDIO_INIT_MUTEX(M) __stdio_init_mutex(& M)
+#endif
 #endif
 
 /**********************************************************************/
@@ -275,7 +271,7 @@ struct __STDIO_FILE_STRUCT {
 #endif
 #ifdef __UCLIBC_HAS_THREADS__
 	int __user_locking;
-	__UCLIBC_MUTEX(__lock);
+	__UCLIBC_IO_MUTEX(__lock);
 #endif
 /* Everything after this is unimplemented... and may be trashed. */
 #if __STDIO_BUILTIN_BUF_SIZE > 0
@@ -341,29 +337,6 @@ struct __STDIO_FILE_STRUCT {
 /**********************************************************************
  * PROTOTYPES OF INTERNAL FUNCTIONS
  **********************************************************************/
-#if defined _LIBC && (defined IS_IN_libc || defined NOT_IN_libc)
-
-extern void _stdio_init(void) attribute_hidden;
-extern void _stdio_term(void) attribute_hidden;
-
-#ifdef __STDIO_HAS_OPENLIST
-
-extern struct __STDIO_FILE_STRUCT *_stdio_openlist;
-
-#ifdef __UCLIBC_HAS_THREADS__
-__UCLIBC_MUTEX_EXTERN(_stdio_openlist_add_lock);
-#ifdef __STDIO_BUFFERS
-__UCLIBC_MUTEX_EXTERN(_stdio_openlist_del_lock);
-extern volatile int _stdio_openlist_use_count; /* _stdio_openlist_del_lock */
-extern int _stdio_openlist_del_count; /* _stdio_openlist_del_lock */
-#endif
-extern int _stdio_user_locking;
-extern void __stdio_init_mutex(__UCLIBC_MUTEX_TYPE *m) attribute_hidden;
-#endif
-
-#endif
-
-#endif
 /**********************************************************************/
 
 #define __CLEARERR_UNLOCKED(__stream)					\

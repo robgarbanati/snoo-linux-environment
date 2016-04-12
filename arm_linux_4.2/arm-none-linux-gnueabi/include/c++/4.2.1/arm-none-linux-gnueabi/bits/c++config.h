@@ -280,10 +280,10 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_FENV_H */
 
 /* Define to 1 if you have the `finite' function. */
-#define _GLIBCXX_HAVE_FINITE 1
+/* #undef _GLIBCXX_HAVE_FINITE */
 
 /* Define to 1 if you have the `finitef' function. */
-#define _GLIBCXX_HAVE_FINITEF 1
+/* #undef _GLIBCXX_HAVE_FINITEF */
 
 /* Define to 1 if you have the `finitel' function. */
 /* #undef _GLIBCXX_HAVE_FINITEL */
@@ -356,19 +356,19 @@ _GLIBCXX_END_NAMESPACE
 #define _GLIBCXX_HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `isinf' function. */
-#define _GLIBCXX_HAVE_ISINF 1
+/* #undef _GLIBCXX_HAVE_ISINF */
 
 /* Define to 1 if you have the `isinff' function. */
-#define _GLIBCXX_HAVE_ISINFF 1
+/* #undef _GLIBCXX_HAVE_ISINFF */
 
 /* Define to 1 if you have the `isinfl' function. */
 /* #undef _GLIBCXX_HAVE_ISINFL */
 
 /* Define to 1 if you have the `isnan' function. */
-#define _GLIBCXX_HAVE_ISNAN 1
+/* #undef _GLIBCXX_HAVE_ISNAN */
 
 /* Define to 1 if you have the `isnanf' function. */
-#define _GLIBCXX_HAVE_ISNANF 1
+/* #undef _GLIBCXX_HAVE_ISNANF */
 
 /* Define to 1 if you have the `isnanl' function. */
 /* #undef _GLIBCXX_HAVE_ISNANL */
@@ -470,10 +470,10 @@ _GLIBCXX_END_NAMESPACE
 /* #undef _GLIBCXX_HAVE_SIGSETJMP */
 
 /* Define to 1 if you have the `sincos' function. */
-/* #undef _GLIBCXX_HAVE_SINCOS */
+#define _GLIBCXX_HAVE_SINCOS 1
 
 /* Define to 1 if you have the `sincosf' function. */
-/* #undef _GLIBCXX_HAVE_SINCOSF */
+#define _GLIBCXX_HAVE_SINCOSF 1
 
 /* Define to 1 if you have the `sincosl' function. */
 /* #undef _GLIBCXX_HAVE_SINCOSL */
@@ -914,12 +914,12 @@ _GLIBCXX_END_NAMESPACE
 
 /* Define if C99 functions or macros from <wchar.h>, <math.h>, <complex.h>,
    <stdio.h>, and <stdlib.h> can be used or exposed. */
-/* #undef _GLIBCXX_USE_C99 */
+#define _GLIBCXX_USE_C99 1
 
 /* Define if C99 functions in <complex.h> should be used in <complex>. Using
    compiler builtins for these functions requires corresponding C99 library
    functions to be present. */
-/* #undef _GLIBCXX_USE_C99_COMPLEX */
+#define _GLIBCXX_USE_C99_COMPLEX 1
 
 /* Define if C99 functions in <complex.h> should be used in <tr1/complex>.
    Using compiler builtins for these functions requires corresponding C99

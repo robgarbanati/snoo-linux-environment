@@ -1,4 +1,6 @@
 /* GNU ld script
  * Use the shared library, but some functions are only in
  * the static library, so try that secondarily. */
-GROUP ( /usr/local/arm_linux_4.2/arm-none-linux-gnueabi/lib/libc.so.0 /usr/local/arm_linux_4.2/arm-none-linux-gnueabi/lib/uclibc_nonshared.a /usr/local/arm_linux_4.2/arm-none-linux-gnueabi/lib/ld-uClibc.so.0 )
+OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
+	      "elf32-littlearm")
+GROUP ( libc.so.0 uclibc_nonshared.a AS_NEEDED ( ld-uClibc.so.0 ) )

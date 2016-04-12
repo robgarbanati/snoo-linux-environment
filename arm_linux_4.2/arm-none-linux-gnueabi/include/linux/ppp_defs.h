@@ -1,5 +1,3 @@
-/*	$Id: ppp_defs.h,v 1.2 1994/09/21 01:31:06 paulus Exp $	*/
-
 /*
  * ppp_defs.h - PPP definitions.
  *
@@ -27,6 +25,8 @@
  * OR MODIFICATIONS.
  */
 
+#include <linux/types.h>
+
 /*
  *  ==FILEVERSION 20000114==
  *
@@ -41,8 +41,6 @@
 
 #ifndef _PPP_DEFS_H_
 #define _PPP_DEFS_H_
-
-#include <linux/crc-ccitt.h>
 
 /*
  * The basic PPP frame.
@@ -97,7 +95,7 @@
 
 #define PPP_INITFCS	0xffff	/* Initial FCS value */
 #define PPP_GOODFCS	0xf0b8	/* Good final FCS value */
-#define PPP_FCS(fcs, c) crc_ccitt_byte(fcs, c)
+
 
 /*
  * Extended asyncmap - allows any character to be escaped.
@@ -175,16 +173,8 @@ struct ppp_comp_stats {
  * the last NP packet was sent or received.
  */
 struct ppp_idle {
-    time_t xmit_idle;		/* time since last NP packet sent */
-    time_t recv_idle;		/* time since last NP packet received */
+    __kernel_time_t xmit_idle;	/* time since last NP packet sent */
+    __kernel_time_t recv_idle;	/* time since last NP packet received */
 };
-
-#ifndef __P
-#ifdef __STDC__
-#define __P(x)	x
-#else
-#define __P(x)	()
-#endif
-#endif
 
 #endif /* _PPP_DEFS_H_ */

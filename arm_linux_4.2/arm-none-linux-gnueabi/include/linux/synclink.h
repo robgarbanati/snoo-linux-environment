@@ -1,7 +1,7 @@
 /*
  * SyncLink Multiprotocol Serial Adapter Driver
  *
- * $Id: synclink.h,v 3.11 2006/02/06 21:20:29 paulkf Exp $
+ * $Id: synclink.h,v 3.14 2006/07/17 20:15:43 paulkf Exp $
  *
  * Copyright (C) 1998-2000 by Microgate Corporation
  *
@@ -13,9 +13,7 @@
 #define _SYNCLINK_H_
 #define SYNCLINK_H_VERSION 3.6
 
-#define BOOLEAN int
-#define TRUE 1
-#define FALSE 0
+#include <linux/types.h>
 
 #define BIT0	0x0001
 #define BIT1	0x0002
@@ -97,6 +95,8 @@
 #define HDLC_TXIDLE_ALT_MARK_SPACE	4
 #define HDLC_TXIDLE_SPACE		5
 #define HDLC_TXIDLE_MARK		6
+#define HDLC_TXIDLE_CUSTOM_8            0x10000000
+#define HDLC_TXIDLE_CUSTOM_16           0x20000000
 
 #define HDLC_ENCODING_NRZ			0
 #define HDLC_ENCODING_NRZB			1
@@ -122,7 +122,10 @@
 
 #define MGSL_MODE_ASYNC		1
 #define MGSL_MODE_HDLC		2
+#define MGSL_MODE_MONOSYNC	3
+#define MGSL_MODE_BISYNC	4
 #define MGSL_MODE_RAW		6
+#define MGSL_MODE_BASE_CLOCK    7
 
 #define MGSL_BUS_TYPE_ISA	1
 #define MGSL_BUS_TYPE_EISA	2
@@ -136,6 +139,7 @@
 #define MGSL_INTERFACE_RTS_EN   0x10
 #define MGSL_INTERFACE_LL       0x20
 #define MGSL_INTERFACE_RL       0x40
+#define MGSL_INTERFACE_MSB_FIRST 0x80
 
 typedef struct _MGSL_PARAMS
 {
@@ -170,6 +174,7 @@ typedef struct _MGSL_PARAMS
 #define SYNCLINK_GT_DEVICE_ID 0x0070
 #define SYNCLINK_GT4_DEVICE_ID 0x0080
 #define SYNCLINK_AC_DEVICE_ID  0x0090
+#define SYNCLINK_GT2_DEVICE_ID 0x00A0
 #define MGSL_MAX_SERIAL_NUMBER 30
 
 /*
@@ -285,5 +290,6 @@ struct gpio_desc {
 #define MGSL_IOCSGPIO		_IOW(MGSL_MAGIC_IOC,16,struct gpio_desc)
 #define MGSL_IOCGGPIO		_IOR(MGSL_MAGIC_IOC,17,struct gpio_desc)
 #define MGSL_IOCWAITGPIO	_IOWR(MGSL_MAGIC_IOC,18,struct gpio_desc)
+
 
 #endif /* _SYNCLINK_H_ */

@@ -8,11 +8,9 @@
 #define LINUX_ATM_TCP_H
 
 #include <linux/atmapi.h>
-
-#ifdef __KERNEL__
-#include <linux/types.h>
-#endif
+#include <linux/atm.h>
 #include <linux/atmioc.h>
+#include <linux/types.h>
 
 
 /*
@@ -20,9 +18,9 @@
  */
 
 struct atmtcp_hdr {
-	uint16_t	vpi;
-	uint16_t	vci;
-	uint32_t	length;		/* ... of data part */
+	__u16	vpi;
+	__u16	vci;
+	__u32	length;		/* ... of data part */
 };
 
 /*
@@ -59,17 +57,5 @@ struct atmtcp_control {
 						   interface */
 
 
-#ifdef __KERNEL__
-
-struct atm_tcp_ops {
-	int (*attach)(struct atm_vcc *vcc,int itf);
-	int (*create_persistent)(int itf);
-	int (*remove_persistent)(int itf);
-	struct module *owner;
-};
-
-extern struct atm_tcp_ops atm_tcp_ops;
-
-#endif
 
 #endif

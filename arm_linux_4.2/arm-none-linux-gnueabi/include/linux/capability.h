@@ -1,72 +1,95 @@
 /*
  * This is <linux/capability.h>
  *
- * Andrew G. Morgan <morgan@transmeta.com>
+ * Andrew G. Morgan <morgan@kernel.org>
  * Alexander Kjeldaas <astor@guardian.no>
  * with help from Aleph1, Roland Buresund and Andrew Main.
  *
  * See here for the libcap library ("POSIX draft" compliance):
  *
- * ftp://linux.kernel.org/pub/linux/libs/security/linux-privs/kernel-2.2/
- */ 
+ * ftp://www.kernel.org/pub/linux/libs/security/linux-privs/kernel-2.6/
+ */
 
 #ifndef _LINUX_CAPABILITY_H
 #define _LINUX_CAPABILITY_H
 
 #include <linux/types.h>
-#include <linux/compiler.h>
+
+struct task_struct;
 
 /* User-level do most of the mapping between kernel and user
    capabilities based on the version tag given by the kernel. The
    kernel might be somewhat backwards compatible, but don't bet on
    it. */
 
-/* XXX - Note, cap_t, is defined by POSIX to be an "opaque" pointer to
+/* Note, cap_t, is defined by POSIX (draft) to be an "opaque" pointer to
    a set of three capability sets.  The transposition of 3*the
    following structure to such a composite is better handled in a user
    library since the draft standard requires the use of malloc/free
    etc.. */
- 
-#define _LINUX_CAPABILITY_VERSION  0x19980330
+
+#define _LINUX_CAPABILITY_VERSION_1  0x19980330
+#define _LINUX_CAPABILITY_U32S_1     1
+
+#define _LINUX_CAPABILITY_VERSION_2  0x20071026  /* deprecated - use v3 */
+#define _LINUX_CAPABILITY_U32S_2     2
+
+#define _LINUX_CAPABILITY_VERSION_3  0x20080522
+#define _LINUX_CAPABILITY_U32S_3     2
 
 typedef struct __user_cap_header_struct {
 	__u32 version;
 	int pid;
-} __user *cap_user_header_t;
- 
+} *cap_user_header_t;
+
 typedef struct __user_cap_data_struct {
         __u32 effective;
         __u32 permitted;
         __u32 inheritable;
-} __user *cap_user_data_t;
-  
-#ifdef __KERNEL__
+} *cap_user_data_t;
 
-#include <linux/spinlock.h>
-#include <asm/current.h>
 
-/* #define STRICT_CAP_T_TYPECHECKS */
+#define XATTR_CAPS_SUFFIX "capability"
+#define XATTR_NAME_CAPS XATTR_SECURITY_PREFIX XATTR_CAPS_SUFFIX
 
-#ifdef STRICT_CAP_T_TYPECHECKS
+#define VFS_CAP_REVISION_MASK	0xFF000000
+#define VFS_CAP_REVISION_SHIFT	24
+#define VFS_CAP_FLAGS_MASK	~VFS_CAP_REVISION_MASK
+#define VFS_CAP_FLAGS_EFFECTIVE	0x000001
 
-typedef struct kernel_cap_struct {
-	__u32 cap;
-} kernel_cap_t;
+#define VFS_CAP_REVISION_1	0x01000000
+#define VFS_CAP_U32_1           1
+#define XATTR_CAPS_SZ_1         (sizeof(__le32)*(1 + 2*VFS_CAP_U32_1))
 
-#else
+#define VFS_CAP_REVISION_2	0x02000000
+#define VFS_CAP_U32_2           2
+#define XATTR_CAPS_SZ_2         (sizeof(__le32)*(1 + 2*VFS_CAP_U32_2))
 
-typedef __u32 kernel_cap_t;
+#define XATTR_CAPS_SZ           XATTR_CAPS_SZ_2
+#define VFS_CAP_U32             VFS_CAP_U32_2
+#define VFS_CAP_REVISION	VFS_CAP_REVISION_2
 
-#endif
-  
-#define _USER_CAP_HEADER_SIZE  (2*sizeof(__u32))
-#define _KERNEL_CAP_T_SIZE     (sizeof(kernel_cap_t))
+struct vfs_cap_data {
+	__le32 magic_etc;            /* Little endian */
+	struct {
+		__le32 permitted;    /* Little endian */
+		__le32 inheritable;  /* Little endian */
+	} data[VFS_CAP_U32];
+};
 
-#endif
+
+/*
+ * Backwardly compatible definition for source code - trapped in a
+ * 32-bit world. If you find you need this, please consider using
+ * libcap to untrap yourself...
+ */
+#define _LINUX_CAPABILITY_VERSION  _LINUX_CAPABILITY_VERSION_1
+#define _LINUX_CAPABILITY_U32S     _LINUX_CAPABILITY_U32S_1
+
 
 
 /**
- ** POSIX-draft defined capabilities. 
+ ** POSIX-draft defined capabilities.
  **/
 
 /* In a system with the [_POSIX_CHOWN_RESTRICTED] option defined, this
@@ -86,7 +109,7 @@ typedef __u32 kernel_cap_t;
    defined. Excluding DAC access covered by CAP_LINUX_IMMUTABLE. */
 
 #define CAP_DAC_READ_SEARCH  2
-    
+
 /* Overrides all restrictions about allowed operations on files, where
    file owner ID must be equal to the user ID, except where CAP_FSETID
    is applicable. It doesn't override MAC and DAC restrictions. */
@@ -101,10 +124,6 @@ typedef __u32 kernel_cap_t;
    cleared on successful return from chown(2) (not implemented). */
 
 #define CAP_FSETID           4
-
-/* Used to decide between falling back on the old suser() or fsuser(). */
-
-#define CAP_FS_MASK          0x1f
 
 /* Overrides the restriction that the real or effective user ID of a
    process sending a signal must match the real or effective user ID
@@ -128,8 +147,15 @@ typedef __u32 kernel_cap_t;
  ** Linux-specific capabilities
  **/
 
-/* Transfer any capability in your permitted set to any pid,
-   remove any capability in your permitted set from any pid */
+/* Without VFS support for capabilities:
+ *   Transfer any capability in your permitted set to any pid,
+ *   remove any capability in your permitted set from any pid
+ * With VFS support for capabilities (neither of above, but)
+ *   Add any capability from current's capability bounding set
+ *       to the current process' inheritable set
+ *   Allow taking bits out of capability bounding set
+ *   Allow modification of the securebits for a process
+ */
 
 #define CAP_SETPCAP          8
 
@@ -178,7 +204,6 @@ typedef __u32 kernel_cap_t;
 #define CAP_IPC_OWNER        15
 
 /* Insert and remove kernel modules - modify kernel without limit */
-/* Modify cap_bset */
 #define CAP_SYS_MODULE       16
 
 /* Allow ioperm/iopl access */
@@ -256,7 +281,7 @@ typedef __u32 kernel_cap_t;
 /* Override reserved space on ext2 filesystem */
 /* Modify data journaling mode on ext3 filesystem (uses journaling
    resources) */
-/* NOTE: ext2 honors fsuid when checking for resource overrides, so 
+/* NOTE: ext2 honors fsuid when checking for resource overrides, so
    you can override using fsuid too */
 /* Override size restrictions on IPC message queues */
 /* Allow more than 64hz interrupts from the real-time clock */
@@ -288,78 +313,35 @@ typedef __u32 kernel_cap_t;
 
 #define CAP_AUDIT_CONTROL    30
 
-#ifdef __KERNEL__
-/* 
- * Bounding set
- */
-extern kernel_cap_t cap_bset;
+#define CAP_SETFCAP	     31
+
+/* Override MAC access.
+   The base kernel enforces no MAC policy.
+   An LSM may enforce a MAC policy, and if it does and it chooses
+   to implement capability based overrides of that policy, this is
+   the capability it should use to do so. */
+
+#define CAP_MAC_OVERRIDE     32
+
+/* Allow MAC configuration or state changes.
+   The base kernel requires no MAC configuration.
+   An LSM may enforce a MAC policy, and if it does and it chooses
+   to implement capability based checks on modifications to that
+   policy or the data required to maintain it, this is the
+   capability it should use to do so. */
+
+#define CAP_MAC_ADMIN        33
+
+#define CAP_LAST_CAP         CAP_MAC_ADMIN
+
+#define cap_valid(x) ((x) >= 0 && (x) <= CAP_LAST_CAP)
 
 /*
- * Internal kernel functions only
+ * Bit location of each capability (used by user-space library and kernel)
  */
- 
-#ifdef STRICT_CAP_T_TYPECHECKS
 
-#define to_cap_t(x) { x }
-#define cap_t(x) (x).cap
+#define CAP_TO_INDEX(x)     ((x) >> 5)        /* 1 << 5 == bits in __u32 */
+#define CAP_TO_MASK(x)      (1 << ((x) & 31)) /* mask for indexed __u32 */
 
-#else
-
-#define to_cap_t(x) (x)
-#define cap_t(x) (x)
-
-#endif
-
-#define CAP_EMPTY_SET       to_cap_t(0)
-#define CAP_FULL_SET        to_cap_t(~0)
-#define CAP_INIT_EFF_SET    to_cap_t(~0 & ~CAP_TO_MASK(CAP_SETPCAP))
-#define CAP_INIT_INH_SET    to_cap_t(0)
-
-#define CAP_TO_MASK(x) (1 << (x))
-#define cap_raise(c, flag)   (cap_t(c) |=  CAP_TO_MASK(flag))
-#define cap_lower(c, flag)   (cap_t(c) &= ~CAP_TO_MASK(flag))
-#define cap_raised(c, flag)  (cap_t(c) & CAP_TO_MASK(flag))
-
-static inline kernel_cap_t cap_combine(kernel_cap_t a, kernel_cap_t b)
-{
-     kernel_cap_t dest;
-     cap_t(dest) = cap_t(a) | cap_t(b);
-     return dest;
-}
-
-static inline kernel_cap_t cap_intersect(kernel_cap_t a, kernel_cap_t b)
-{
-     kernel_cap_t dest;
-     cap_t(dest) = cap_t(a) & cap_t(b);
-     return dest;
-}
-
-static inline kernel_cap_t cap_drop(kernel_cap_t a, kernel_cap_t drop)
-{
-     kernel_cap_t dest;
-     cap_t(dest) = cap_t(a) & ~cap_t(drop);
-     return dest;
-}
-
-static inline kernel_cap_t cap_invert(kernel_cap_t c)
-{
-     kernel_cap_t dest;
-     cap_t(dest) = ~cap_t(c);
-     return dest;
-}
-
-#define cap_isclear(c)       (!cap_t(c))
-#define cap_issubset(a,set)  (!(cap_t(a) & ~cap_t(set)))
-
-#define cap_clear(c)         do { cap_t(c) =  0; } while(0)
-#define cap_set_full(c)      do { cap_t(c) = ~0; } while(0)
-#define cap_mask(c,mask)     do { cap_t(c) &= cap_t(mask); } while(0)
-
-#define cap_is_fs_cap(c)     (CAP_TO_MASK(c) & CAP_FS_MASK)
-
-int capable(int cap);
-int __capable(struct task_struct *t, int cap);
-
-#endif /* __KERNEL__ */
 
 #endif /* !_LINUX_CAPABILITY_H */

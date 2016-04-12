@@ -345,12 +345,12 @@ SEND-PR: support             I need help with gcc.
 `[ -n "$ARCH" ] && echo Architecture: $ARCH`
 `[ -n "$MACHINE" ] && echo Machine: $MACHINE`
 	$ENVIRONMENT_C
-host: i686-pc-linux-gnu
-build: i686-pc-linux-gnu
+host: x86_64-pc-linux-gnu
+build: x86_64-pc-linux-gnu
 target: arm-none-linux-gnueabi
 __EOF__
       cat >> $file << \__EOF__
-configured with: ../../gcc-4.2.1/configure --prefix=/usr/local/arm_linux_4.2 --target=arm-none-linux-gnueabi --enable-languages=c,c++ --with-gnu-ld --with-gnu-as --disable-nls --with-float=soft --without-newlib --disable-libmudflap --disable-libssp --disable-libgomp
+configured with: ./configure --prefix=/usr/local/arm_linux_4.2 --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=arm-none-linux-gnueabi --with-float=soft --with-gnu-ld --with-gnu-as --with-mode=arm --with-arch=armv5te --with-tune=arm926ej-s --disable-multilib --disable-nls --disable-sjlj-exceptions --disable-libmudflap --disable-libgomp --enable-shared --enable-threads=posix --enable-c99 --enable-long-long --enable-__cxa_atexit --enable-languages=c,c++
 __EOF__
       cat >> $file << __EOF__
 >Description:

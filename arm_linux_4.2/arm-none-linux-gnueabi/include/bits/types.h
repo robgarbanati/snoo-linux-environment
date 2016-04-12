@@ -29,7 +29,6 @@
 
 #define __need_size_t
 #include <stddef.h>
-#include <bits/kernel_types.h>
 
 /* Convenience types.  */
 typedef unsigned char __u_char;
@@ -130,7 +129,7 @@ typedef struct
 /* No need to mark the typedef with __extension__.   */
 # define __STD_TYPE		typedef
 #else
-# error
+# error your machine is neither 32 bit or 64 bit ... it must be magical
 #endif
 #include <bits/typesizes.h>	/* Defines __*_T_TYPE macros.  */
 
@@ -197,9 +196,6 @@ __STD_TYPE __U32_TYPE __socklen_t;
 
 
 #undef __STD_TYPE
-
-/* Used in `struct shmid_ds'.  */
-typedef __kernel_ipc_pid_t __ipc_pid_t;
 
 /* Now add the thread types.  */
 #if defined __UCLIBC_HAS_THREADS__ && (defined __USE_POSIX199506 || defined __USE_UNIX98)

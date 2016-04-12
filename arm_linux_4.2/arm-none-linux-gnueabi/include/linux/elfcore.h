@@ -4,8 +4,9 @@
 #include <linux/types.h>
 #include <linux/signal.h>
 #include <linux/time.h>
-#include <linux/user.h>
 #include <linux/ptrace.h>
+#include <linux/elf.h>
+#include <linux/fs.h>
 
 struct elf_siginfo
 {
@@ -14,15 +15,12 @@ struct elf_siginfo
 	int	si_errno;			/* errno */
 };
 
-#include <asm/elf.h>
 
-#ifndef __KERNEL__
 typedef elf_greg_t greg_t;
 typedef elf_gregset_t gregset_t;
 typedef elf_fpregset_t fpregset_t;
 typedef elf_fpxregset_t fpxregset_t;
 #define NGREG ELF_NGREG
-#endif
 
 /*
  * Definitions to generate Intel SVR4-like core files.
@@ -60,6 +58,16 @@ struct elf_prstatus
 	long	pr_instr;		/* Current instruction */
 #endif
 	elf_gregset_t pr_reg;	/* GP registers */
+#ifdef CONFIG_BINFMT_ELF_FDPIC
+	/* When using FDPIC, the loadmap addresses need to be communicated
+	 * to GDB in order for GDB to do the necessary relocations.  The
+	 * fields (below) used to communicate this information are placed
+	 * immediately after ``pr_reg'', so that the loadmap addresses may
+	 * be viewed as part of the register set if so desired.
+	 */
+	unsigned long pr_exec_fdpic_loadmap;
+	unsigned long pr_interp_fdpic_loadmap;
+#endif
 	int pr_fpvalid;		/* True if math co-processor being used.  */
 };
 
@@ -80,51 +88,9 @@ struct elf_prpsinfo
 	char	pr_psargs[ELF_PRARGSZ];	/* initial part of arg list */
 };
 
-#ifndef __KERNEL__
 typedef struct elf_prstatus prstatus_t;
 typedef struct elf_prpsinfo prpsinfo_t;
 #define PRARGSZ ELF_PRARGSZ 
-#endif
-
-#ifdef __KERNEL__
-static inline void elf_core_copy_regs(elf_gregset_t *elfregs, struct pt_regs *regs)
-{
-#ifdef ELF_CORE_COPY_REGS
-	ELF_CORE_COPY_REGS((*elfregs), regs)
-#else
-	BUG_ON(sizeof(*elfregs) != sizeof(*regs));
-	*(struct pt_regs *)elfregs = *regs;
-#endif
-}
-
-static inline int elf_core_copy_task_regs(struct task_struct *t, elf_gregset_t* elfregs)
-{
-#ifdef ELF_CORE_COPY_TASK_REGS
-	
-	return ELF_CORE_COPY_TASK_REGS(t, elfregs);
-#endif
-	return 0;
-}
-
-extern int dump_fpu (struct pt_regs *, elf_fpregset_t *);
-
-static inline int elf_core_copy_task_fpregs(struct task_struct *t, struct pt_regs *regs, elf_fpregset_t *fpu)
-{
-#ifdef ELF_CORE_COPY_FPREGS
-	return ELF_CORE_COPY_FPREGS(t, fpu);
-#else
-	return dump_fpu(regs, fpu);
-#endif
-}
-
-#ifdef ELF_CORE_COPY_XFPREGS
-static inline int elf_core_copy_task_xfpregs(struct task_struct *t, elf_fpxregset_t *xfpu)
-{
-	return ELF_CORE_COPY_XFPREGS(t, xfpu);
-}
-#endif
-
-#endif /* __KERNEL__ */
 
 
 #endif /* _LINUX_ELFCORE_H */

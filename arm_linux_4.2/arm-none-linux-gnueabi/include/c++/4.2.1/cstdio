@@ -144,7 +144,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
 _GLIBCXX_END_NAMESPACE
 
-#if _GLIBCXX_USE_C99 || defined(__UCLIBC__)
+#if _GLIBCXX_USE_C99
 
 #undef snprintf
 #undef vfscanf

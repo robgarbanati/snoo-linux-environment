@@ -6,7 +6,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 2001 - 2008, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 2001 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -19,15 +19,12 @@
 # This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
 # KIND, either express or implied.
 #
-# $Id: curl-config.in,v 1.32 2008-01-10 22:14:02 bagder Exp $
 ###########################################################################
-#
-# The idea to this kind of setup info script was stolen from numerous
-# other packages, such as neon, libxml and gnome.
-#
-prefix=/usr/local/arm_linux_4.2/arm-linux
+
+prefix=/usr/local/arm_linux_4.2/arm-none-linux-gnueabi
 exec_prefix=${prefix}
 includedir=${prefix}/include
+cppflag_curl_staticlib=
 
 usage()
 {
@@ -36,10 +33,12 @@ Usage: curl-config [OPTION]
 
 Available values for OPTION include:
 
+  --built-shared says 'yes' if libcurl was built shared
   --ca        ca bundle install path
   --cc        compiler
   --cflags    pre-processor and compiler flags
   --checkfor [version] check for (lib)curl of the specified version
+  --configure the arguments given to configure when building curl
   --features  newline separated list of enabled features
   --help      display this help and exit
   --libs      library linking information
@@ -67,148 +66,111 @@ while test $# -gt 0; do
     esac
 
     case "$1" in
+    --built-shared)
+        echo yes
+        ;;
+
     --ca)
-	echo ""
-	;;
+        echo ""
+        ;;
 
     --cc)
-	echo "arm-linux-gcc"
-	;;
+        echo "arm-none-linux-gnueabi-gcc"
+        ;;
 
     --prefix)
-	echo "$prefix"
-	;;
+        echo "$prefix"
+        ;;
 
     --feature|--features)
-	if test "" = "1"; then
-          echo "SSL"
-          NTLM=1 # OpenSSL implies NTLM
-        elif test -n ""; then
-          echo "SSL"
-        fi
-	if test "" = "1"; then
-          echo "KRB4"
-        fi
-	if test "" = "1"; then
-          echo "IPv6"
-        fi
-	if test "1" = "1"; then
-          echo "libz"
-        fi
-	if test "" = "1"; then
-          echo "AsynchDNS"
-        fi
-	if test "" = "1"; then
-          echo "IDN"
-        fi
-	if test "" = "1"; then
-          echo "SSPI"
-          NTLM=1
-        fi
-	if test "$NTLM" = "1"; then
-          echo "NTLM"
-        fi
-	;;
+        for feature in SSL libz NTLM NTLM_WB TLS-SRP ""; do
+            test -n "$feature" && echo "$feature"
+        done
+        ;;
 
     --protocols)
-	if test "" != "1"; then
-          echo "HTTP"
-	  if test "" = "1"; then
-            echo "HTTPS"
-          fi
-        fi
-	if test "" != "1"; then
-          echo "FTP"
-	  if test "" = "1"; then
-            echo "FTPS"
-          fi
-        fi
-	if test "" != "1"; then
-          echo "FILE"
-        fi
-	if test "" != "1"; then
-          echo "TELNET"
-        fi
-	if test "1" != "1"; then
-          echo "LDAP"
-        fi
-	if test "1" != "1"; then
-          echo "LDAPS"
-        fi
-	if test "" != "1"; then
-          echo "DICT"
-        fi
-	if test "" != "1"; then
-          echo "TFTP"
-        fi
-	if test "" = "1"; then
-          echo "SCP"
-          echo "SFTP"
-        fi
-	;;
+        for protocol in DICT FILE FTP FTPS GOPHER HTTP HTTPS IMAP IMAPS POP3 POP3S RTSP SMTP SMTPS TELNET TFTP; do
+            echo "$protocol"
+        done
+        ;;
+
     --version)
-	echo libcurl 7.18.0
-	exit 0
-	;;
+        echo libcurl 7.37.1
+        exit 0
+        ;;
 
     --checkfor)
         checkfor=$2
         cmajor=`echo $checkfor | cut -d. -f1`
         cminor=`echo $checkfor | cut -d. -f2`
         # when extracting the patch part we strip off everything after a
-	# dash as that's used for things like version 1.2.3-CVS
-	cpatch=`echo $checkfor | cut -d. -f3 | cut -d- -f1`
+        # dash as that's used for things like version 1.2.3-CVS
+        cpatch=`echo $checkfor | cut -d. -f3 | cut -d- -f1`
         checknum=`echo "$cmajor*256*256 + $cminor*256 + ${cpatch:-0}" | bc`
-        numuppercase=`echo 071200 | tr 'a-f' 'A-F'`
+        numuppercase=`echo 072501 | tr 'a-f' 'A-F'`
         nownum=`echo "obase=10; ibase=16; $numuppercase" | bc`
 
-	if test "$nownum" -ge "$checknum"; then
-	  # silent success
-	  exit 0
-	else
-	  echo "requested version $checkfor is newer than existing 7.18.0"
-	  exit 1
-	fi
-	;;
+        if test "$nownum" -ge "$checknum"; then
+          # silent success
+          exit 0
+        else
+          echo "requested version $checkfor is newer than existing 7.37.1"
+          exit 1
+        fi
+        ;;
 
     --vernum)
-	echo 071200
-	exit 0
-	;;
+        echo 072501
+        exit 0
+        ;;
 
     --help)
-	usage 0
-	;;
+        usage 0
+        ;;
 
     --cflags)
-       	if test "X${prefix}/include" = "X/usr/include"; then
-          echo ""
+        if test "X$cppflag_curl_staticlib" = "X-DCURL_STATICLIB"; then
+          CPPFLAG_CURL_STATICLIB="-DCURL_STATICLIB "
         else
-          echo "-I${prefix}/include"
+          CPPFLAG_CURL_STATICLIB=""
         fi
-       	;;
+        if test "X${prefix}/include" = "X/usr/include"; then
+          echo "$CPPFLAG_CURL_STATICLIB"
+        else
+          echo "${CPPFLAG_CURL_STATICLIB}-I${prefix}/include"
+        fi
+        ;;
 
     --libs)
-	if test "X${exec_prefix}/lib" != "X/usr/lib" -a "X${exec_prefix}/lib" != "X/usr/lib64"; then
-	   CURLLIBDIR="-L${exec_prefix}/lib "
-	else
-	   CURLLIBDIR=""
-	fi
-	if test "Xno" = "Xyes"; then
-	  echo ${CURLLIBDIR}-lcurl   -lz 
-	else
-	  echo ${CURLLIBDIR}-lcurl  
-	fi
-	;;
+        if test "X${exec_prefix}/lib" != "X/usr/lib" -a "X${exec_prefix}/lib" != "X/usr/lib64"; then
+           CURLLIBDIR="-L${exec_prefix}/lib "
+        else
+           CURLLIBDIR=""
+        fi
+        if test "Xno" = "Xyes"; then
+          echo ${CURLLIBDIR}-lcurl -lssl -lcrypto -lz
+        else
+          echo ${CURLLIBDIR}-lcurl
+        fi
+        ;;
 
     --static-libs)
-	echo ${exec_prefix}/lib/libcurl.a   -lz 
-	;;
+        if test "Xyes" != "Xno" ; then
+          echo ${exec_prefix}/lib/libcurl.a  -lssl -lcrypto -lz
+        else
+          echo "curl was built with static libraries disabled" >&2
+          exit 1
+        fi
+        ;;
+
+    --configure)
+        echo " '--host=arm-none-linux-gnueabi' '--prefix=/usr/local/arm_linux_4.2/arm-none-linux-gnueabi' 'host_alias=arm-none-linux-gnueabi'"
+        ;;
 
     *)
         echo "unknown option: $1"
-	usage 1
-	;;
+        usage 1
+        ;;
     esac
     shift
 done

@@ -49,27 +49,33 @@ struct ipc_perm
 #define IPC_64  0x0100  /* New version (support 32-bit UIDs, bigger
 			   message sizes, etc. */
 
-#ifdef __KERNEL__
-
-#define IPCMNI 32768  /* <= MAX_INT limit for ipc arrays (including sysctl changes) */
-
-/* used by in-kernel data structures */
-struct kern_ipc_perm
-{
-	spinlock_t	lock;
-	int		deleted;
-	key_t		key;
-	uid_t		uid;
-	gid_t		gid;
-	uid_t		cuid;
-	gid_t		cgid;
-	mode_t		mode; 
-	unsigned long	seq;
-	void		*security;
+/*
+ * These are used to wrap system calls.
+ *
+ * See architecture code for ugly details..
+ */
+struct ipc_kludge {
+	struct msgbuf *msgp;
+	long msgtyp;
 };
 
-#endif /* __KERNEL__ */
+#define SEMOP		 1
+#define SEMGET		 2
+#define SEMCTL		 3
+#define SEMTIMEDOP	 4
+#define MSGSND		11
+#define MSGRCV		12
+#define MSGGET		13
+#define MSGCTL		14
+#define SHMAT		21
+#define SHMDT		22
+#define SHMGET		23
+#define SHMCTL		24
+
+/* Used by the DIPC package, try and avoid reusing it */
+#define DIPC            25
+
+#define IPCCALL(version,op)	((version)<<16 | (op))
+
 
 #endif /* _LINUX_IPC_H */
-
-

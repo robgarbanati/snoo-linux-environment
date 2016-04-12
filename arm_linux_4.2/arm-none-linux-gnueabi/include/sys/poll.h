@@ -30,8 +30,6 @@
 /* Get the timespec definition.  */
 # define __need_timespec
 # include <time.h>
-/* get NULL definition. */
-# include <stddef.h>
 #endif
 
 
@@ -59,7 +57,7 @@ __BEGIN_DECLS
    __THROW.  */
 extern int poll (struct pollfd *__fds, nfds_t __nfds, int __timeout);
 
-#ifdef __USE_GNU
+#if defined __USE_GNU && defined __UCLIBC_LINUX_SPECIFIC__
 /* Like poll, but before waiting the threads signal mask is replaced
    with that specified in the fourth parameter.  For better usability,
    the timeout value is specified using a TIMESPEC object.

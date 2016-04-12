@@ -20,26 +20,11 @@
 #define NFSSVC_MAXVERS		3
 
 /*
- * Maximum blocksize supported by daemon currently at 32K
+ * Maximum blocksizes supported by daemon under various circumstances.
  */
-#define NFSSVC_MAXBLKSIZE	(32*1024)
+#define NFSSVC_MAXBLKSIZE	RPCSVC_MAXPAYLOAD
+/* NFSv2 is limited by the protocol specification, see RFC 1094 */
+#define NFSSVC_MAXBLKSIZE_V2	(8*1024)
 
-#ifdef __KERNEL__
-
-#ifndef NFS_SUPER_MAGIC
-# define NFS_SUPER_MAGIC	0x6969
-#endif
-
-#define NFSD_BUFSIZE		(1024 + NFSSVC_MAXBLKSIZE)
-
-#ifdef CONFIG_NFSD_V4
-# define NFSSVC_XDRSIZE		NFS4_SVC_XDRSIZE
-#elif defined(CONFIG_NFSD_V3)
-# define NFSSVC_XDRSIZE		NFS3_SVC_XDRSIZE
-#else
-# define NFSSVC_XDRSIZE		NFS2_SVC_XDRSIZE
-#endif
-
-#endif /* __KERNEL__ */
 
 #endif /* _LINUX_NFSD_CONST_H */

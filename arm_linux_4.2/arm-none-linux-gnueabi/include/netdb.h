@@ -27,7 +27,7 @@
 
 #include <netinet/in.h>
 #include <stdint.h>
-#ifdef __USE_MISC
+#if defined __USE_MISC && defined __UCLIBC_HAS_RPC__
 /* This is necessary to make this include file properly replace the
    Sun version.  */
 # include <rpc/netdb.h>
@@ -54,20 +54,13 @@
 __BEGIN_DECLS
 
 /* Error status for non-reentrant lookup functions.
-   We use a macro to access always the thread-specific `h_errno' variable.
-   We always need the extern int here in case internal libc code undefines 
-   the macro because it needs access to the underlying storage. */
-extern int h_errno;
-#ifdef __UCLIBC_HAS_THREADS__
-# define h_errno (*__h_errno_location ())
-#endif
+   We use a macro to access always the thread-specific `h_errno' variable.  */
+#define h_errno (*__h_errno_location ())
 
 /* Function to get address of global `h_errno' variable.  */
 extern int *__h_errno_location (void) __THROW __attribute__ ((__const__));
 
-#ifdef _LIBC
-# define __set_h_errno(x) (h_errno = (x))
-#endif
+/* Macros for accessing h_errno from inside libc.  */
 
 /* Possible values left in `h_errno'.  */
 #define	NETDB_INTERNAL	-1	/* See errno.  */
@@ -97,7 +90,6 @@ extern void herror (__const char *__str) __THROW;
 
 /* Return string associated with error ERR_NUM.  */
 extern __const char *hstrerror (int __err_num) __THROW;
-
 
 
 /* Description of data base entry for a single host.  */
@@ -225,8 +217,6 @@ extern struct netent *getnetbyaddr (uint32_t __net, int __type);
    marked with __THROW.  */
 extern struct netent *getnetbyname (__const char *__name);
 
-#if 0
-/* FIXME */
 #ifdef	__USE_MISC
 /* Reentrant versions of the functions above.  The additional
    arguments specify a buffer of BUFLEN starting at BUF.  The last
@@ -242,20 +232,17 @@ extern int getnetent_r (struct netent *__restrict __result_buf,
 			char *__restrict __buf, size_t __buflen,
 			struct netent **__restrict __result,
 			int *__restrict __h_errnop);
-
 extern int getnetbyaddr_r (uint32_t __net, int __type,
 			   struct netent *__restrict __result_buf,
 			   char *__restrict __buf, size_t __buflen,
 			   struct netent **__restrict __result,
 			   int *__restrict __h_errnop);
-
 extern int getnetbyname_r (__const char *__restrict __name,
 			   struct netent *__restrict __result_buf,
 			   char *__restrict __buf, size_t __buflen,
 			   struct netent **__restrict __result,
 			   int *__restrict __h_errnop);
-#endif	/* misc */
-#endif
+#endif	/* __USE_MISC */
 
 
 /* Description of data base entry for a single service.  */
@@ -442,6 +429,11 @@ extern int getnetgrent_r (char **__restrict __hostp,
 			  char *__restrict __buffer, size_t __buflen);
 #endif	/* UCLIBC_HAS_NETGROUP */
 #endif	/* misc */
+
+
+/* ruserpass - remote password check.
+   This function also exists in glibc but is undocumented */
+extern int ruserpass(const char *host, const char **aname, const char **apass);
 
 
 #ifdef __USE_BSD

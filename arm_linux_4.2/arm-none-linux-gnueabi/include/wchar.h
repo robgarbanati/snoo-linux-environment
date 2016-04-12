@@ -260,7 +260,7 @@ extern wchar_t *wcstok (wchar_t *__restrict __s,
 extern size_t wcslen (__const wchar_t *__s) __THROW __attribute_pure__;
 __END_NAMESPACE_C99
 
-#ifdef __USE_XOPEN
+#if defined __USE_XOPEN && defined __UCLIBC_SUSV3_LEGACY__
 /* Another name for `wcsstr' from XPG4.  */
 extern wchar_t *wcswcs (__const wchar_t *__haystack, __const wchar_t *__needle)
      __THROW __attribute_pure__;
@@ -744,6 +744,7 @@ extern size_t wcsftime_l (wchar_t *__restrict __s, size_t __maxsize,
 # define __need_iswxxx
 # include <wctype.h>
 #endif
+
 
 __END_DECLS
 

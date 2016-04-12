@@ -25,8 +25,11 @@
 /* Get definition of `struct ether_addr'.  */
 #include <netinet/if_ether.h>
 
+
 __BEGIN_DECLS
 
+#if defined __UCLIBC_HAS_SOCKET__ || defined __UCLIBC_HAS_IPV4__ || \
+	defined __UCLIBC_HAS_IPV6__
 /* Convert 48 bit Ethernet ADDRess to ASCII.  */
 extern char *ether_ntoa (__const struct ether_addr *__addr) __THROW;
 extern char *ether_ntoa_r (__const struct ether_addr *__addr, char *__buf)
@@ -48,6 +51,7 @@ extern int ether_hostton (__const char *__hostname, struct ether_addr *__addr)
 /* Scan LINE and set ADDR and HOSTNAME.  */
 extern int ether_line (__const char *__line, struct ether_addr *__addr,
 		       char *__hostname) __THROW;
+#endif
 
 __END_DECLS
 

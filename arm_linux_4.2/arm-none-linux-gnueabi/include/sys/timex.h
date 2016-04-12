@@ -116,11 +116,15 @@ struct timex
 
 __BEGIN_DECLS
 
+#if 0
 extern int __adjtimex (struct timex *__ntx) __THROW;
+#endif
 extern int adjtimex (struct timex *__ntx) __THROW;
 
+#if defined __UCLIBC_NTP_LEGACY__
 extern int ntp_gettime (struct ntptimeval *__ntv) __THROW;
 extern int ntp_adjtime (struct timex *__tntx) __THROW;
+#endif
 
 __END_DECLS
 

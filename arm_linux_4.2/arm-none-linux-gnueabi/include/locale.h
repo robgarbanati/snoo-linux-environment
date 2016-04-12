@@ -1,4 +1,4 @@
-/* Copyright (C) 1991,92,95-99,2000,01,02 Free Software Foundation, Inc.
+/* Copyright (C) 1991,1992,1995-2002,2007,2009 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@ __BEGIN_DECLS
 #define LC_COLLATE        __LC_COLLATE
 #define LC_MONETARY       __LC_MONETARY
 #define LC_MESSAGES       __LC_MESSAGES
+#define	LC_ALL		  __LC_ALL
 #if 0
 #define LC_PAPER	  __LC_PAPER
 #define LC_NAME		  __LC_NAME
@@ -47,8 +48,9 @@ __BEGIN_DECLS
 #define LC_MEASUREMENT	  __LC_MEASUREMENT
 #define LC_IDENTIFICATION __LC_IDENTIFICATION
 #endif
-#define	LC_ALL		  __LC_ALL
 
+
+__BEGIN_NAMESPACE_STD
 
 /* Structure giving information about numeric and monetary notation.  */
 struct lconv
@@ -121,8 +123,6 @@ struct lconv
 };
 
 
-__BEGIN_NAMESPACE_STD
-
 /* Set and/or return the current locale.  */
 extern char *setlocale (int __category, __const char *__locale) __THROW;
 
@@ -132,7 +132,7 @@ extern struct lconv *localeconv (void) __THROW;
 __END_NAMESPACE_STD
 
 
-#if defined(__USE_GNU) && defined(__UCLIBC_HAS_XLOCALE__)
+#if defined __USE_XOPEN2K8 && defined __UCLIBC_HAS_LOCALE__
 /* The concept of one static locale per category is not very well
    thought out.  Many applications will need to process its data using
    information from several different locales.  Another application is
@@ -144,9 +144,12 @@ __END_NAMESPACE_STD
    Attention: all these functions are *not* standardized in any form.
    This is a proof-of-concept implementation.  */
 
+#ifdef __UCLIBC_HAS_XLOCALE__
 /* Get locale datatype definition.  */
 # include <xlocale.h>
+#endif
 
+/* POSIX 2008 makes locale_t official.  */
 typedef __locale_t locale_t;
 
 /* Return a reference to a data structure representing a set of locale
@@ -166,9 +169,6 @@ extern __locale_t newlocale (int __category_mask, __const char *__locale,
 # define LC_COLLATE_MASK	(1 << __LC_COLLATE)
 # define LC_MONETARY_MASK	(1 << __LC_MONETARY)
 # define LC_MESSAGES_MASK	(1 << __LC_MESSAGES)
-#ifdef L_newlocale
-#warning mask defines for extra locale categories
-#endif /* L_newlocale - uClibc note */
 #ifdef LC_PAPER
 # define LC_PAPER_MASK		(1 << __LC_PAPER)
 # define LC_NAME_MASK		(1 << __LC_NAME)

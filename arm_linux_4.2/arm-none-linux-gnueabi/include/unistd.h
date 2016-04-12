@@ -51,9 +51,11 @@ __BEGIN_DECLS
    Software Development Utilities Option.  */
 #define	_POSIX2_SW_DEV	200112L
 
+#if 0 /* uClibc does not provide the utility */
 /* If defined, the implementation supports the
    creation of locales with the localedef utility.  */
 #define _POSIX2_LOCALEDEF       200112L
+#endif
 
 /* X/Open version number to which the library conforms.  It is selectable.  */
 #ifdef __USE_UNIX98
@@ -381,6 +383,12 @@ extern ssize_t pwrite64 (int __fd, __const void *__buf, size_t __n,
    Returns 0 if successful, -1 if not.  */
 extern int pipe (int __pipedes[2]) __THROW __wur;
 
+#if defined __UCLIBC_LINUX_SPECIFIC__ && defined __USE_GNU
+/* Same as pipe but apply flags passed in FLAGS to the new file
+   descriptors.  */
+extern int pipe2 (int __pipedes[2], int __flags) __THROW __wur;
+#endif
+
 /* Schedule an alarm.  In SECONDS seconds, the process will get a SIGALRM.
    If SECONDS is zero, any currently scheduled alarm will be cancelled.
    The function returns the number of seconds remaining until the last
@@ -402,7 +410,8 @@ extern unsigned int alarm (unsigned int __seconds) __THROW;
    __THROW.  */
 extern unsigned int sleep (unsigned int __seconds);
 
-#if defined __USE_BSD || defined __USE_XOPEN_EXTENDED
+#if (defined __USE_BSD || defined __USE_XOPEN_EXTENDED) \
+	&& defined __UCLIBC_SUSV3_LEGACY__
 /* Set an alarm to go off (generating a SIGALRM signal) in VALUE
    microseconds.  If INTERVAL is nonzero, when the alarm goes off, the
    timer is reset to go off every INTERVAL microseconds thereafter.
@@ -703,10 +712,12 @@ extern int getresuid (__uid_t *__ruid, __uid_t *__euid, __uid_t *__suid)
 extern int getresgid (__gid_t *__rgid, __gid_t *__egid, __gid_t *__sgid)
      __THROW;
 
+#if defined __UCLIBC_LINUX_SPECIFIC__
 /* Set the real user ID, effective user ID, and saved-set user ID,
    of the calling process to RUID, EUID, and SUID, respectively.  */
 extern int setresuid (__uid_t __ruid, __uid_t __euid, __uid_t __suid)
      __THROW;
+#endif
 
 /* Set the real group ID, effective group ID, and saved-set group ID,
    of the calling process to RGID, EGID, and SGID, respectively.  */
@@ -715,7 +726,7 @@ extern int setresgid (__gid_t __rgid, __gid_t __egid, __gid_t __sgid)
 #endif
 
 
-#ifdef __ARCH_USE_MMU__
+#if defined __UCLIBC_HAS_STUBS__ || defined __ARCH_USE_MMU__
 /* Clone the calling process, creating an exact copy.
    Return -1 for errors, 0 to the new process,
    and the process ID of the new process to the old process.  */
@@ -730,6 +741,8 @@ extern __pid_t fork (void) __THROW;
 extern __pid_t vfork (void) __THROW;
 #endif /* Use BSD. */
 
+/* Special exit function which only terminates the current thread.  */
+extern void __exit_thread (int val) __attribute__ ((__noreturn__));
 
 /* Return the pathname of the terminal FD is open on, or NULL on errors.
    The returned storage is good only until the next call to this function.  */
@@ -743,6 +756,7 @@ extern int ttyname_r (int __fd, char *__buf, size_t __buflen)
 /* Return 1 if FD is a valid descriptor associated
    with a terminal, zero if not.  */
 extern int isatty (int __fd) __THROW;
+
 
 #if 0 /*defined __USE_BSD \
     || (defined __USE_XOPEN_EXTENDED && !defined __USE_UNIX98)*/
@@ -857,20 +871,24 @@ extern int sethostname (__const char *__name, size_t __len)
    This call is restricted to the super-user.  */
 extern int sethostid (long int __id) __THROW __wur;
 
-
+#if defined __UCLIBC_BSD_SPECIFIC__ || defined _LIBC
 /* Get and set the NIS (aka YP) domain name, if any.
    Called just like `gethostname' and `sethostname'.
    The NIS domain name is usually the empty string when not using NIS.  */
 extern int getdomainname (char *__name, size_t __len)
      __THROW __nonnull ((1)) __wur;
+#endif
+#if defined __UCLIBC_BSD_SPECIFIC__
 extern int setdomainname (__const char *__name, size_t __len)
      __THROW __nonnull ((1)) __wur;
+#endif
 
-
+#if defined __UCLIBC_LINUX_SPECIFIC__
 /* Revoke access permissions to all processes currently communicating
    with the control terminal, and then send a SIGHUP signal to the process
    group of the control terminal.  */
 extern int vhangup (void) __THROW;
+#endif
 
 #if 0
 /* Revoke the access of all descriptors currently open on FILE.  */
@@ -900,12 +918,10 @@ extern void endusershell (void) __THROW; /* Discard cached info.  */
 extern void setusershell (void) __THROW; /* Rewind and re-read the file.  */
 
 
-#ifdef __ARCH_USE_MMU__
 /* Put the program in the background, and dissociate from the controlling
    terminal.  If NOCHDIR is zero, do `chdir ("/")'.  If NOCLOSE is zero,
    redirects stdin, stdout, and stderr to /dev/null.  */
 extern int daemon (int __nochdir, int __noclose) __THROW __wur;
-#endif
 #endif /* Use BSD || X/Open.  */
 
 
@@ -1064,7 +1080,8 @@ extern int lockf64 (int __fd, int __cmd, __off64_t __len) __wur;
        __result; }))
 #endif
 
-#if defined __USE_POSIX199309 || defined __USE_UNIX98
+#if (defined __USE_POSIX199309 || defined __USE_UNIX98) \
+	&& defined __UCLIBC_HAS_REALTIME__
 /* Synchronize at least the data part of a file with the underlying
    media.  */
 extern int fdatasync (int __fildes) __THROW;
@@ -1074,6 +1091,7 @@ extern int fdatasync (int __fildes) __THROW;
 /* XPG4.2 specifies that prototypes for the encryption functions must
    be defined here.  */
 #ifdef	__USE_XOPEN
+# if defined __UCLIBC_HAS_CRYPT__
 /* Encrypt at most 8 characters from KEY using salt to perturb DES.  */
 extern char *crypt (__const char *__key, __const char *__salt)
      __THROW __nonnull ((1, 2));
@@ -1081,6 +1099,7 @@ extern char *crypt (__const char *__key, __const char *__salt)
 /* Encrypt data in BLOCK in place if EDFLAG is zero; otherwise decrypt
    block in place.  */
 extern void encrypt (char *__block, int __edflag) __THROW __nonnull ((1));
+# endif /* __UCLIBC_HAS_CRYPT__ */
 
 
 /* Swab pairs bytes in the first N bytes of the area pointed to by
@@ -1106,5 +1125,8 @@ extern char *ctermid (char *__s) __THROW;
 #endif
 
 __END_DECLS
+
+
+
 
 #endif /* unistd.h  */

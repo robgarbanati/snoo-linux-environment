@@ -59,7 +59,6 @@ Mellon the rights to redistribute these changes without encumbrance.
 #ifndef _CODA_HEADER_
 #define _CODA_HEADER_
 
-#include <linux/config.h>
 
 /* Catch new _KERNEL defn for NetBSD and DJGPP/__CYGWIN32__ */
 #if defined(__NetBSD__) || \
@@ -85,7 +84,7 @@ typedef unsigned __int64 u_quad_t;
 typedef unsigned long long u_quad_t;
 #endif
 
-#define inline
+#define __inline__
 
 struct timespec {
         long       ts_sec;
@@ -101,14 +100,10 @@ typedef unsigned long long u_quad_t;
 #if defined(__linux__)
 #include <linux/time.h>
 #define cdev_t u_quad_t
-#ifndef __KERNEL__
 #if !defined(_UQUAD_T_) && (!defined(__GLIBC__) || __GLIBC__ < 2)
 #define _UQUAD_T_ 1
 typedef unsigned long long u_quad_t;
 #endif
-#else /*__KERNEL__ */
-typedef unsigned long long u_quad_t;
-#endif /* __KERNEL__ */
 #else
 #define cdev_t dev_t
 #endif
@@ -200,36 +195,12 @@ typedef u_int32_t vuid_t;
 typedef u_int32_t vgid_t;
 #endif /*_VUID_T_ */
 
-#ifdef CONFIG_CODA_FS_OLD_API
-struct CodaFid {
-	u_int32_t opaque[3];
-};
-
-static __inline__ ino_t  coda_f2i(struct CodaFid *fid)
-{
-	if ( ! fid ) 
-		return 0; 
-	if (fid->opaque[1] == 0xfffffffe || fid->opaque[1] == 0xffffffff)
-		return ((fid->opaque[0] << 20) | (fid->opaque[2] & 0xfffff));
-	else
-		return (fid->opaque[2] + (fid->opaque[1]<<10) + (fid->opaque[0]<<20));
-}
-
-struct coda_cred {
-    vuid_t cr_uid, cr_euid, cr_suid, cr_fsuid; /* Real, efftve, set, fs uid*/
-    vgid_t cr_groupid, cr_egid, cr_sgid, cr_fsgid; /* same for groups */
-};
-
-#else /* not defined(CONFIG_CODA_FS_OLD_API) */
-
 struct CodaFid {
 	u_int32_t opaque[4];
 };
 
 #define coda_f2i(fid)\
 	(fid ? (fid->opaque[3] ^ (fid->opaque[2]<<10) ^ (fid->opaque[1]<<20) ^ fid->opaque[0]) : 0)
-
-#endif
 
 #ifndef _VENUS_VATTR_T_
 #define _VENUS_VATTR_T_
@@ -314,15 +285,7 @@ struct coda_statfs {
 
 #define CIOC_KERNEL_VERSION _IOWR('c', 10, size_t)
 
-#if 0
-#define CODA_KERNEL_VERSION 0 /* don't care about kernel version number */
-#define CODA_KERNEL_VERSION 1 /* The old venus 4.6 compatible interface */
-#endif
-#ifdef CONFIG_CODA_FS_OLD_API
-#define CODA_KERNEL_VERSION 2 /* venus_lookup got an extra parameter */
-#else
 #define CODA_KERNEL_VERSION 3 /* 128-bit file identifiers */
-#endif
 
 /*
  *        Venus <-> Coda  RPC arguments
@@ -330,16 +293,9 @@ struct coda_statfs {
 struct coda_in_hdr {
     u_int32_t opcode;
     u_int32_t unique;	    /* Keep multiple outstanding msgs distinct */
-#ifdef CONFIG_CODA_FS_OLD_API
-    u_int16_t pid;	    /* Common to all */
-    u_int16_t pgid;	    /* Common to all */
-    u_int16_t sid;          /* Common to all */
-    struct coda_cred cred;  /* Common to all */
-#else
     pid_t pid;
     pid_t pgid;
     vuid_t uid;
-#endif
 };
 
 /* Really important that opcode and unique are 1st two fields! */
@@ -614,11 +570,7 @@ struct coda_vget_out {
 /* CODA_PURGEUSER is a venus->kernel call */
 struct coda_purgeuser_out {
     struct coda_out_hdr oh;
-#ifdef CONFIG_CODA_FS_OLD_API
-    struct coda_cred cred;
-#else
     vuid_t uid;
-#endif
 };
 
 /* coda_zapfile: */
@@ -661,9 +613,6 @@ struct coda_open_by_fd_out {
     struct coda_out_hdr oh;
     int fd;
 
-#ifdef __KERNEL__
-    struct file *fh; /* not passed from userspace but used in-kernel only */
-#endif
 };
 
 /* coda_open_by_path: */
@@ -759,14 +708,14 @@ union coda_downcalls {
 
 #define PIOCPARM_MASK 0x0000ffff
 struct ViceIoctl {
-        void __user *in;        /* Data to be transferred in */
-        void __user *out;       /* Data to be transferred out */
+        void *in;        /* Data to be transferred in */
+        void *out;       /* Data to be transferred out */
         u_short in_size;        /* Size of input buffer <= 2K */
         u_short out_size;       /* Maximum size of output buffer, <= 2K */
 };
 
 struct PioctlData {
-        const char __user *path;
+        const char *path;
         int follow;
         struct ViceIoctl vi;
 };

@@ -110,6 +110,15 @@ typedef struct fs_disk_quota {
 #define FS_DQ_WARNS_MASK	(FS_DQ_BWARNS | FS_DQ_IWARNS | FS_DQ_RTBWARNS)
 
 /*
+ * Accounting values.  These can only be set for filesystem with
+ * non-transactional quotas that require quotacheck(8) in userspace.
+ */
+#define FS_DQ_BCOUNT		(1<<12)
+#define FS_DQ_ICOUNT		(1<<13)
+#define FS_DQ_RTBCOUNT		(1<<14)
+#define FS_DQ_ACCT_MASK		(FS_DQ_BCOUNT | FS_DQ_ICOUNT | FS_DQ_RTBCOUNT)
+
+/*
  * Various flags related to quotactl(2).  Only relevant to XFS filesystems.
  */
 #define XFS_QUOTA_UDQ_ACCT	(1<<0)  /* user quota accounting */
@@ -125,14 +134,14 @@ typedef struct fs_disk_quota {
 
 /*
  * fs_quota_stat is the struct returned in Q_XGETQSTAT for a given file system.
- * Provides a centralized way to get meta infomation about the quota subsystem.
+ * Provides a centralized way to get meta information about the quota subsystem.
  * eg. space taken up for user and group quotas, number of dquots currently
  * incore.
  */
 #define FS_QSTAT_VERSION	1	/* fs_quota_stat.qs_version */
 
 /*
- * Some basic infomation about 'quota files'.
+ * Some basic information about 'quota files'.
  */
 typedef struct fs_qfilestat {
 	__u64		qfs_ino;	/* inode number */

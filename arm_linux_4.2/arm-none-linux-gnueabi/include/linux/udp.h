@@ -20,10 +20,10 @@
 #include <linux/types.h>
 
 struct udphdr {
-	__u16	source;
-	__u16	dest;
-	__u16	len;
-	__u16	check;
+	__be16	source;
+	__be16	dest;
+	__be16	len;
+	__sum16	check;
 };
 
 /* UDP socket options */
@@ -33,31 +33,7 @@ struct udphdr {
 /* UDP encapsulation types */
 #define UDP_ENCAP_ESPINUDP_NON_IKE	1 /* draft-ietf-ipsec-nat-t-ike-00/01 */
 #define UDP_ENCAP_ESPINUDP	2 /* draft-ietf-ipsec-udp-encaps-06 */
+#define UDP_ENCAP_L2TPINUDP	3 /* rfc2661 */
 
-#ifdef __KERNEL__
-#include <linux/config.h>
-#include <linux/types.h>
-
-#include <net/inet_sock.h>
-
-struct udp_sock {
-	/* inet_sock has to be the first member */
-	struct inet_sock inet;
-	int		 pending;	/* Any pending frames ? */
-	unsigned int	 corkflag;	/* Cork is required */
-  	__u16		 encap_type;	/* Is this an Encapsulation socket? */
-	/*
-	 * Following member retains the infomation to create a UDP header
-	 * when the socket is uncorked.
-	 */
-	__u16		 len;		/* total length of pending frames */
-};
-
-static inline struct udp_sock *udp_sk(const struct sock *sk)
-{
-	return (struct udp_sock *)sk;
-}
-
-#endif
 
 #endif	/* _LINUX_UDP_H */

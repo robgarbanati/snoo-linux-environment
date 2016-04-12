@@ -2,7 +2,7 @@
  * include/linux/tipc_config.h: Include file for TIPC configuration interface
  * 
  * Copyright (c) 2003-2006, Ericsson AB
- * Copyright (c) 2005, Wind River Systems
+ * Copyright (c) 2005-2007, Wind River Systems
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -74,6 +74,7 @@
 #define  TIPC_CMD_SHOW_NAME_TABLE   0x0005    /* tx name_tbl_query, rx ultra_string */
 #define  TIPC_CMD_SHOW_PORTS        0x0006    /* tx none, rx ultra_string */
 #define  TIPC_CMD_SHOW_LINK_STATS   0x000B    /* tx link_name, rx ultra_string */
+#define  TIPC_CMD_SHOW_STATS        0x000F    /* tx unsigned, rx ultra_string */
 
 #if 0
 #define  TIPC_CMD_SHOW_PORT_STATS   0x0008    /* tx port_ref, rx ultra_string */
@@ -136,6 +137,14 @@
 #define  TIPC_CMD_SET_NETID         0x800B    /* tx unsigned, rx none */
 
 /*
+ * Reserved commands:
+ * May not be issued by any process.
+ * Used internally by TIPC.
+ */
+
+#define  TIPC_CMD_NOT_NET_ADMIN     0xC001    /* tx none, rx none */
+
+/*
  * TLV types defined for TIPC
  */
 
@@ -194,34 +203,34 @@
 
 
 struct tipc_node_info {
-	__u32 addr;			/* network address of node */
-	__u32 up;			/* 0=down, 1= up */
+	__be32 addr;			/* network address of node */
+	__be32 up;			/* 0=down, 1= up */
 };
 
 struct tipc_link_info {
-	__u32 dest;			/* network address of peer node */
-	__u32 up;			/* 0=down, 1=up */
+	__be32 dest;			/* network address of peer node */
+	__be32 up;			/* 0=down, 1=up */
 	char str[TIPC_MAX_LINK_NAME];	/* link name */
 };
 
 struct tipc_bearer_config {
-	__u32 priority;			/* Range [1,31]. Override per link  */
-	__u32 detect_scope;     
+	__be32 priority;		/* Range [1,31]. Override per link  */
+	__be32 detect_scope;
 	char name[TIPC_MAX_BEARER_NAME];
 };
 
 struct tipc_link_config {
-	__u32 value;
+	__be32 value;
 	char name[TIPC_MAX_LINK_NAME];
 };
 
 #define TIPC_NTQ_ALLTYPES 0x80000000
 
 struct tipc_name_table_query {
-	__u32 depth;	/* 1:type, 2:+name info, 3:+port info, 4+:+debug info */
-	__u32 type;	/* {t,l,u} info ignored if high bit of "depth" is set */
-	__u32 lowbound; /* (i.e. displays all entries of name table) */
-	__u32 upbound;
+	__be32 depth;	/* 1:type, 2:+name info, 3:+port info, 4+:+debug info */
+	__be32 type;	/* {t,l,u} info ignored if high bit of "depth" is set */
+	__be32 lowbound; /* (i.e. displays all entries of name table) */
+	__be32 upbound;
 };
 
 /*
@@ -262,8 +271,8 @@ struct tipc_route_info {
  */
 
 struct tlv_desc {
-	__u16 tlv_len;		/* TLV length (descriptor + value) */
-	__u16 tlv_type;		/* TLV identifier */
+	__be16 tlv_len;		/* TLV length (descriptor + value) */
+	__be16 tlv_type;		/* TLV identifier */
 };
 
 #define TLV_ALIGNTO 4
@@ -273,7 +282,7 @@ struct tlv_desc {
 #define TLV_SPACE(datalen) (TLV_ALIGN(TLV_LENGTH(datalen)))
 #define TLV_DATA(tlv) ((void *)((char *)(tlv) + TLV_LENGTH(0)))
 
-static inline int TLV_OK(const void *tlv, __u16 space)
+static __inline__ int TLV_OK(const void *tlv, __u16 space)
 {
 	/*
 	 * Would also like to check that "tlv" is a multiple of 4,
@@ -288,13 +297,13 @@ static inline int TLV_OK(const void *tlv, __u16 space)
 		(ntohs(((struct tlv_desc *)tlv)->tlv_len) <= space);
 }
 
-static inline int TLV_CHECK(const void *tlv, __u16 space, __u16 exp_type)
+static __inline__ int TLV_CHECK(const void *tlv, __u16 space, __u16 exp_type)
 {
 	return TLV_OK(tlv, space) && 
 		(ntohs(((struct tlv_desc *)tlv)->tlv_type) == exp_type);
 }
 
-static inline int TLV_SET(void *tlv, __u16 type, void *data, __u16 len)
+static __inline__ int TLV_SET(void *tlv, __u16 type, void *data, __u16 len)
 {
 	struct tlv_desc *tlv_ptr;
 	int tlv_len;
@@ -318,29 +327,29 @@ struct tlv_list_desc {
 	__u32 tlv_space;		/* # bytes from curr TLV to list end */
 };
 
-static inline void TLV_LIST_INIT(struct tlv_list_desc *list, 
+static __inline__ void TLV_LIST_INIT(struct tlv_list_desc *list, 
 				 void *data, __u32 space)
 {
 	list->tlv_ptr = (struct tlv_desc *)data;
 	list->tlv_space = space;
 }
 	     
-static inline int TLV_LIST_EMPTY(struct tlv_list_desc *list)
+static __inline__ int TLV_LIST_EMPTY(struct tlv_list_desc *list)
 { 
 	return (list->tlv_space == 0);
 }
 
-static inline int TLV_LIST_CHECK(struct tlv_list_desc *list, __u16 exp_type)
+static __inline__ int TLV_LIST_CHECK(struct tlv_list_desc *list, __u16 exp_type)
 {
 	return TLV_CHECK(list->tlv_ptr, list->tlv_space, exp_type);
 }
 
-static inline void *TLV_LIST_DATA(struct tlv_list_desc *list)
+static __inline__ void *TLV_LIST_DATA(struct tlv_list_desc *list)
 {
 	return TLV_DATA(list->tlv_ptr);
 }
 
-static inline void TLV_LIST_STEP(struct tlv_list_desc *list)
+static __inline__ void TLV_LIST_STEP(struct tlv_list_desc *list)
 {
 	__u16 tlv_space = TLV_ALIGN(ntohs(list->tlv_ptr->tlv_len));
 
@@ -377,9 +386,9 @@ struct tipc_genlmsghdr {
 
 struct tipc_cfg_msg_hdr
 {
-	__u32 tcm_len;		/* Message length (including header) */
-	__u16 tcm_type;		/* Command type */
-	__u16 tcm_flags;	/* Additional flags */
+	__be32 tcm_len;		/* Message length (including header) */
+	__be16 tcm_type;	/* Command type */
+	__be16 tcm_flags;	/* Additional flags */
 	char  tcm_reserved[8];	/* Unused */
 };
 
@@ -391,7 +400,7 @@ struct tipc_cfg_msg_hdr
 #define TCM_SPACE(datalen)  (TCM_ALIGN(TCM_LENGTH(datalen)))
 #define TCM_DATA(tcm_hdr)   ((void *)((char *)(tcm_hdr) + TCM_LENGTH(0)))
 
-static inline int TCM_SET(void *msg, __u16 cmd, __u16 flags,
+static __inline__ int TCM_SET(void *msg, __u16 cmd, __u16 flags,
 			  void *data, __u16 data_len)
 {
 	struct tipc_cfg_msg_hdr *tcm_hdr;

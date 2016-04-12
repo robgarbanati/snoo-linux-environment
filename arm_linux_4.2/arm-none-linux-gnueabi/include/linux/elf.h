@@ -2,8 +2,9 @@
 #define _LINUX_ELF_H
 
 #include <linux/types.h>
-#include <linux/auxvec.h>
-#include <asm/elf.h>
+#include <linux/elf-em.h>
+
+struct file;
 
 #ifndef elf_read_implies_exec
   /* Executables for which elf_read_implies_exec() returns TRUE will
@@ -46,6 +47,28 @@ typedef __s64	Elf64_Sxword;
 
 #define PT_GNU_STACK	(PT_LOOS + 0x474e551)
 
+/*
+ * Extended Numbering
+ *
+ * If the real number of program header table entries is larger than
+ * or equal to PN_XNUM(0xffff), it is set to sh_info field of the
+ * section header at index 0, and PN_XNUM is set to e_phnum
+ * field. Otherwise, the section header at index 0 is zero
+ * initialized, if it exists.
+ *
+ * Specifications are available in:
+ *
+ * - Sun microsystems: Linker and Libraries.
+ *   Part No: 817-1984-17, September 2008.
+ *   URL: http://docs.sun.com/app/docs/doc/817-1984
+ *
+ * - System V ABI AMD64 Architecture Processor Supplement
+ *   Draft Version 0.99.,
+ *   May 11, 2009.
+ *   URL: http://www.x86-64.org/
+ */
+#define PN_XNUM 0xffff
+
 /* These constants define the different elf file types */
 #define ET_NONE   0
 #define ET_REL    1
@@ -54,64 +77,6 @@ typedef __s64	Elf64_Sxword;
 #define ET_CORE   4
 #define ET_LOPROC 0xff00
 #define ET_HIPROC 0xffff
-
-/* These constants define the various ELF target machines */
-#define EM_NONE  0
-#define EM_M32   1
-#define EM_SPARC 2
-#define EM_386   3
-#define EM_68K   4
-#define EM_88K   5
-#define EM_486   6   /* Perhaps disused */
-#define EM_860   7
-
-#define EM_MIPS		8	/* MIPS R3000 (officially, big-endian only) */
-
-#define EM_MIPS_RS4_BE 10	/* MIPS R4000 big-endian */
-
-#define EM_PARISC      15	/* HPPA */
-
-#define EM_SPARC32PLUS 18	/* Sun's "v8plus" */
-
-#define EM_PPC	       20	/* PowerPC */
-#define EM_PPC64       21       /* PowerPC64 */
-
-#define EM_SH	       42	/* SuperH */
-
-#define EM_SPARCV9     43	/* SPARC v9 64-bit */
-
-#define EM_IA_64	50	/* HP/Intel IA-64 */
-
-#define EM_X86_64	62	/* AMD x86-64 */
-
-#define EM_S390		22	/* IBM S/390 */
-
-#define EM_CRIS         76      /* Axis Communications 32-bit embedded processor */
-
-#define EM_V850		87	/* NEC v850 */
-
-#define EM_M32R		88	/* Renesas M32R */
-
-#define EM_H8_300       46      /* Renesas H8/300,300H,H8S */
-
-/*
- * This is an interim value that we will use until the committee comes
- * up with a final number.
- */
-#define EM_ALPHA	0x9026
-
-/* Bogus old v850 magic number, used by old tools.  */
-#define EM_CYGNUS_V850	0x9080
-
-/* Bogus old m32r magic number, used by old tools.  */
-#define EM_CYGNUS_M32R	0x9041
-
-/*
- * This is the old interim value for S/390 architecture
- */
-#define EM_S390_OLD     0xA390
-
-#define EM_FRV		0x5441		/* Fujitsu FR-V */
 
 /* This is the info that is needed to parse the dynamic section of the file */
 #define DT_NULL		0
@@ -138,6 +103,23 @@ typedef __s64	Elf64_Sxword;
 #define DT_DEBUG	21
 #define DT_TEXTREL	22
 #define DT_JMPREL	23
+#define DT_ENCODING	32
+#define OLD_DT_LOOS	0x60000000
+#define DT_LOOS		0x6000000d
+#define DT_HIOS		0x6ffff000
+#define DT_VALRNGLO	0x6ffffd00
+#define DT_VALRNGHI	0x6ffffdff
+#define DT_ADDRRNGLO	0x6ffffe00
+#define DT_ADDRRNGHI	0x6ffffeff
+#define DT_VERSYM	0x6ffffff0
+#define DT_RELACOUNT	0x6ffffff9
+#define DT_RELCOUNT	0x6ffffffa
+#define DT_FLAGS_1	0x6ffffffb
+#define DT_VERDEF	0x6ffffffc
+#define	DT_VERDEFNUM	0x6ffffffd
+#define DT_VERNEED	0x6ffffffe
+#define	DT_VERNEEDNUM	0x6fffffff
+#define OLD_DT_HIOS     0x6fffffff
 #define DT_LOPROC	0x70000000
 #define DT_HIPROC	0x7fffffff
 
@@ -245,7 +227,7 @@ typedef struct elf32_hdr{
 } Elf32_Ehdr;
 
 typedef struct elf64_hdr {
-  unsigned char	e_ident[16];		/* ELF "magic number" */
+  unsigned char	e_ident[EI_NIDENT];	/* ELF "magic number" */
   Elf64_Half e_type;
   Elf64_Half e_machine;
   Elf64_Word e_version;
@@ -323,7 +305,7 @@ typedef struct elf64_phdr {
 #define SHN_COMMON	0xfff2
 #define SHN_HIRESERVE	0xffff
  
-typedef struct {
+typedef struct elf32_shdr {
   Elf32_Word	sh_name;
   Elf32_Word	sh_type;
   Elf32_Word	sh_flags;
@@ -386,13 +368,30 @@ typedef struct elf64_shdr {
 #define ELF_OSABI ELFOSABI_NONE
 #endif
 
-/* Notes used in ET_CORE */
+/*
+ * Notes used in ET_CORE. Architectures export some of the arch register sets
+ * using the corresponding note types via the PTRACE_GETREGSET and
+ * PTRACE_SETREGSET requests.
+ */
 #define NT_PRSTATUS	1
 #define NT_PRFPREG	2
 #define NT_PRPSINFO	3
 #define NT_TASKSTRUCT	4
 #define NT_AUXV		6
 #define NT_PRXFPREG     0x46e62b7f      /* copied from gdb5.1/include/elf/common.h */
+#define NT_PPC_VMX	0x100		/* PowerPC Altivec/VMX registers */
+#define NT_PPC_SPE	0x101		/* PowerPC SPE/EVR registers */
+#define NT_PPC_VSX	0x102		/* PowerPC VSX registers */
+#define NT_386_TLS	0x200		/* i386 TLS slots (struct user_desc) */
+#define NT_386_IOPERM	0x201		/* x86 io permission bitmap (1=deny) */
+#define NT_X86_XSTATE	0x202		/* x86 extended state using xsave */
+#define NT_S390_HIGH_GPRS	0x300	/* s390 upper register halves */
+#define NT_S390_TIMER	0x301		/* s390 timer register */
+#define NT_S390_TODCMP	0x302		/* s390 TOD clock comparator register */
+#define NT_S390_TODPREG	0x303		/* s390 TOD programmable register */
+#define NT_S390_CTRS	0x304		/* s390 control registers */
+#define NT_S390_PREFIX	0x305		/* s390 prefix register */
+#define NT_S390_LAST_BREAK	0x306	/* s390 breaking event address */
 
 
 /* Note header in a PT_NOTE section */
@@ -408,22 +407,5 @@ typedef struct elf64_note {
   Elf64_Word n_descsz;	/* Content size */
   Elf64_Word n_type;	/* Content type */
 } Elf64_Nhdr;
-
-#if ELF_CLASS == ELFCLASS32
-
-extern Elf32_Dyn _DYNAMIC [];
-#define elfhdr		elf32_hdr
-#define elf_phdr	elf32_phdr
-#define elf_note	elf32_note
-
-#else
-
-extern Elf64_Dyn _DYNAMIC [];
-#define elfhdr		elf64_hdr
-#define elf_phdr	elf64_phdr
-#define elf_note	elf64_note
-
-#endif
-
 
 #endif /* _LINUX_ELF_H */

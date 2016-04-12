@@ -90,6 +90,9 @@ extern int strncasecmp (__const char *__s1, __const char *__s2, size_t __n)
 
 __END_DECLS
 
+
+
+
 #endif	/* string.h  */
 
 #endif	/* strings.h  */

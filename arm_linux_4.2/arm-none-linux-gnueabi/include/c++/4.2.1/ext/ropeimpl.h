@@ -54,9 +54,6 @@
 #include <ext/memory> // For uninitialized_copy_n
 #include <ext/numeric> // For power
 
-/* cope w/ index defined as macro, SuSv3 proposal */
-#undef index
-
 _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 
   using std::size_t;

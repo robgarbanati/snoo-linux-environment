@@ -98,56 +98,85 @@ typedef res_sendhookact (*res_send_rhook) (const struct sockaddr_in *ns,
 # define RES_MAXNDOTS		15	/* should reflect bit field size */
 # define RES_MAXRETRANS		30	/* only for resolv.conf/RES_OPTIONS */
 # define RES_MAXRETRY		5	/* only for resolv.conf/RES_OPTIONS */
-# define RES_DFLRETRY		2	/* Default #/tries. */
+# define RES_DFLRETRY		3	/* Default #/tries. */
+/* (glibc uses RES_DFLRETRY of 2 but also does _res.retry = 4 sometimes (!) */
 # define RES_MAXTIME		65535	/* Infinity, in milliseconds. */
 
+/* _res (an instance of this structure) uses 0.5kb in bss
+ * in "ordinary" libc's (glibc, xBSD). We want to be less wasteful.
+ * We (1) shuffle and shrink some integer fields,
+ * and (2) can switch off stuff we don't support.
+ * Everything inside __UCLIBC_HAS_COMPAT_RES_STATE__
+ * is not actually used by uclibc and can be configured off.
+ * However, this will prevent some programs from building.
+ * Really obscure stuff with no observed users in the wild is under
+ * __UCLIBC_HAS_EXTRA_COMPAT_RES_STATE__.
+ * I guess it's safe to set that to N.
+ */
 struct __res_state {
-	int	retrans;	 	/* retransmition time interval */
-	int	retry;			/* number of times to retransmit */
-	u_long	options;		/* option flags - see below. */
-	int	nscount;		/* number of name servers */
-	struct sockaddr_in
-		nsaddr_list[MAXNS];	/* address of name server */
-# define nsaddr	nsaddr_list[0]		/* for backward compatibility */
-	u_short	id;			/* current message id */
-	char	*dnsrch[MAXDNSRCH+1];	/* components of domain to search */
+	/*int retrans, retry; - moved, was here */
+	u_int32_t options;		/* (was: ulong) option flags - see below. */
+	struct sockaddr_in nsaddr_list[MAXNS]; /* address of name server */
+#define nsaddr nsaddr_list[0]		/* for backward compatibility */
+	char	*dnsrch[MAXDNSRCH + 1];	/* components of domain to search */
+	/*char defdname[256]; - moved, was here */
+	u_int8_t nscount;		/* (was: int) number of name servers */
+	u_int8_t ndots;			/* (was: unsigned:4) threshold for initial abs. query */
+	u_int8_t retrans;		/* (was: int) retransmission time interval */
+	u_int8_t retry;			/* (was: int) number of times to retransmit */
+#ifdef __UCLIBC_HAS_COMPAT_RES_STATE__
+	/* googling for "_res.defdname" says it's still sometimes used.
+	 * Pity. It's huge, I want to move it to EXTRA_COMPAT... */
 	char	defdname[256];		/* default domain (deprecated) */
-	u_long	pfcode;			/* RES_PRF_ flags - see below. */
-	unsigned ndots:4;		/* threshold for initial abs. query */
-	unsigned nsort:4;		/* number of elements in sort_list[] */
-	char	unused[3];
+	u_int8_t nsort;			/* (was: unsigned:4) number of elements in sort_list[] */
+	u_int16_t pfcode;		/* (was: ulong) RES_PRF_ flags. Used by dig. */
+	unsigned short id;		/* current message id */
+	int	res_h_errno;		/* last one set for this context */
 	struct {
 		struct in_addr	addr;
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
-	res_send_qhook qhook;		/* query hook */
-	res_send_rhook rhook;		/* response hook */
-	int	res_h_errno;		/* last one set for this context */
-	int	_vcsock;		/* PRIVATE: for res_send VC i/o */
-	u_int	_flags;			/* PRIVATE: see below */
-	union {
-		char	pad[52];	/* On an i386 this means 512b total. */
-		struct {
-			u_int16_t		nscount;
-#if 0
-			u_int16_t		nsmap[MAXNS];
-#else
-			u_int16_t		nstimes[MAXNS]; /* ms. */
 #endif
+
+	/* I assume that the intention is to store all
+	 * DNS servers' addresses here, and duplicate in nsaddr_list[]
+	 * those which have IPv4 address. In the case of IPv4 address
+	 * _u._ext.nsaddrs[x] will point to some nsaddr_list[y],
+	 * otherwise it will point into malloc'ed sockaddr_in6.
+	 * nscount is the number of IPv4 addresses and _u._ext.nscount
+	 * is the number of addresses of all kinds.
+	 *
+	 * If this differs from established usage and you need
+	 * to change this, please describe how it is supposed to work.
+	 */
+	union {
+		struct {
+#ifdef __UCLIBC_HAS_IPV6__
+			struct sockaddr_in6	*nsaddrs[MAXNS];
+#endif
+			u_int8_t		nscount; /* (was: u_int16_t) */
+#ifdef __UCLIBC_HAS_COMPAT_RES_STATE__
+			/* rather obscure, and differs in BSD and glibc */
+			u_int16_t		nstimes[MAXNS];
 			int			nssocks[MAXNS];
 			u_int16_t		nscount6;
 			u_int16_t		nsinit;
-			struct sockaddr_in6	*nsaddrs[MAXNS];
-#if 0
-#ifdef _LIBC
-			unsigned long long int	initstamp
-			  __attribute__((packed));
-#else
-			unsigned int		_initstamp[2];
-#endif
+			/* glibc also has: */
+			/*u_int16_t		nsmap[MAXNS];*/
+			/*unsigned long long	initstamp;*/
 #endif
 		} _ext;
 	} _u;
+
+#ifdef __UCLIBC_HAS_EXTRA_COMPAT_RES_STATE__
+	/* Truly obscure stuff.
+	 * Googling for "_res.XXX" for these members
+	 * turned up basically empty */
+	res_send_qhook qhook;		/* query hook */
+	res_send_rhook rhook;		/* response hook */
+	int	_vcsock;		/* PRIVATE: for res_send VC i/o */
+	unsigned _flags;		/* PRIVATE: see below */
+#endif
 };
 
 typedef struct __res_state *res_state;
@@ -196,6 +225,7 @@ struct res_sym {
 
 /*
  * Resolver options (keep these in synch with res_debug.c, please)
+ * (which of these do we really implement??)
  */
 #define RES_INIT	0x00000001	/* address initialized */
 #define RES_DEBUG	0x00000002	/* print debug messages */
@@ -247,53 +277,66 @@ struct res_sym {
 /*			0x00008000	*/
 
 /* Things involving an internal (static) resolver context. */
-#if 0
 __BEGIN_DECLS
 extern struct __res_state *__res_state(void) __attribute__ ((__const__));
 __END_DECLS
 #define _res (*__res_state())
-#else
-extern struct __res_state _res;
-#endif
 
+#if 0
 #define fp_nquery		__fp_nquery
 #define fp_query		__fp_query
 #define hostalias		__hostalias
 #define p_query			__p_query
+#endif
 #define res_close		__res_close
 #define res_init		__res_init
+#if 0
 #define res_isourserver		__res_isourserver
+#endif
 #define res_mkquery		__res_mkquery
 #define res_query		__res_query
 #define res_querydomain		__res_querydomain
 #define res_search		__res_search
+#if 0
 #define res_send		__res_send
+#endif
 
 __BEGIN_DECLS
+#if 0
 void		fp_nquery (const u_char *, int, FILE *) __THROW;
 void		fp_query (const u_char *, FILE *) __THROW;
 const char *	hostalias (const char *) __THROW;
 void		p_query (const u_char *) __THROW;
+#endif
 #ifdef __UCLIBC_HAS_BSD_RES_CLOSE__
 void		res_close (void) __THROW;
 #endif
 int		res_init (void) __THROW;
+#if 0
 int		res_isourserver (const struct sockaddr_in *) __THROW;
+#endif
 int		res_mkquery (int, const char *, int, int, const u_char *,
 			     int, const u_char *, u_char *, int) __THROW;
 int		res_query (const char *, int, int, u_char *, int) __THROW;
 int		res_querydomain (const char *, const char *, int, int,
 				 u_char *, int) __THROW;
 int		res_search (const char *, int, int, u_char *, int) __THROW;
+#if 0
 int		res_send (const u_char *, int, u_char *, int) __THROW;
+#endif
 __END_DECLS
 
+#if 0
 #define b64_ntop		__b64_ntop
 #define b64_pton		__b64_pton
-#define dn_comp			__dn_comp
 #define dn_count_labels		__dn_count_labels
+#endif
+#define dn_comp			__dn_comp
 #define dn_expand		__dn_expand
 #define dn_skipname		__dn_skipname
+#define res_ninit		__res_ninit
+#define res_nclose		__res_nclose
+#if 0
 #define fp_resstat		__fp_resstat
 #define loc_aton		__loc_aton
 #define loc_ntoa		__loc_ntoa
@@ -315,8 +358,6 @@ __END_DECLS
 #define res_hostalias		__res_hostalias
 #define res_mailok		__res_mailok
 #define res_nameinquery		__res_nameinquery
-#define res_nclose		__res_nclose
-#define res_ninit		__res_ninit
 #define res_nmkquery		__res_nmkquery
 #define res_npquery		__res_npquery
 #define res_nquery		__res_nquery
@@ -330,7 +371,9 @@ __END_DECLS
 #define sym_ntop		__sym_ntop
 #define sym_ntos		__sym_ntos
 #define sym_ston		__sym_ston
+#endif
 __BEGIN_DECLS
+#if 0
 int		res_hnok (const char *) __THROW;
 int		res_ownok (const char *) __THROW;
 int		res_mailok (const char *) __THROW;
@@ -342,7 +385,6 @@ int		b64_ntop (u_char const *, size_t, char *, size_t) __THROW;
 int		b64_pton (char const *, u_char *, size_t) __THROW;
 int		loc_aton (const char *ascii, u_char *binary) __THROW;
 const char *	loc_ntoa (const u_char *binary, char *ascii) __THROW;
-int		dn_skipname (const u_char *, const u_char *) __THROW;
 void		putlong (u_int32_t, u_char *) __THROW;
 void		putshort (u_int16_t, u_char *) __THROW;
 const char *	p_class (int) __THROW;
@@ -358,10 +400,15 @@ const u_char *	p_fqname (const u_char *, const u_char *, FILE *) __THROW;
 const char *	p_option (u_long option) __THROW;
 char *		p_secstodate (u_long) __THROW;
 int		dn_count_labels (const char *) __THROW;
+#endif
+int		dn_skipname (const u_char *, const u_char *) __THROW;
 int		dn_comp (const char *, u_char *, int, u_char **, u_char **)
      __THROW;
 int		dn_expand (const u_char *, const u_char *, const u_char *,
 			   char *, int) __THROW;
+int		res_ninit (res_state) __THROW;
+void		res_nclose (res_state) __THROW;
+#if 0
 u_int		res_randomid (void) __THROW;
 int		res_nameinquery (const char *, int, int,
 				 const u_char *, const u_char *) __THROW;
@@ -369,7 +416,6 @@ int		res_queriesmatch (const u_char *, const u_char *,
 				  const u_char *, const u_char *) __THROW;
 const char *	p_section (int section, int opcode) __THROW;
 /* Things involving a resolver context. */
-int		res_ninit (res_state) __THROW;
 int		res_nisourserver (const res_state,
 				  const struct sockaddr_in *) __THROW;
 void		fp_resstat (const res_state, FILE *) __THROW;
@@ -388,8 +434,10 @@ int		res_nmkquery (res_state, int, const char *, int, int,
 			      int) __THROW;
 int		res_nsend (res_state, const u_char *, int, u_char *, int)
      __THROW;
-void		res_nclose (res_state) __THROW;
-__END_DECLS
 #endif
+__END_DECLS
+
+
+#endif /* _RESOLV_H_ */
 
 #endif /* !_RESOLV_H_ */

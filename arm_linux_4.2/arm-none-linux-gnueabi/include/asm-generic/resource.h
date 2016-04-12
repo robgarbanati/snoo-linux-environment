@@ -12,7 +12,7 @@
  *   then it defines them prior including asm-generic/resource.h. )
  */
 
-#define RLIMIT_CPU		0	/* CPU time in ms */
+#define RLIMIT_CPU		0	/* CPU time in sec */
 #define RLIMIT_FSIZE		1	/* Maximum filesize */
 #define RLIMIT_DATA		2	/* max data size */
 #define RLIMIT_STACK		3	/* max stack size */
@@ -44,8 +44,8 @@
 #define RLIMIT_NICE		13	/* max nice prio allowed to raise to
 					   0-39 for nice level 19 .. -20 */
 #define RLIMIT_RTPRIO		14	/* maximum realtime priority */
-
-#define RLIM_NLIMITS		15
+#define RLIMIT_RTTIME		15	/* timeout for RT tasks in us */
+#define RLIM_NLIMITS		16
 
 /*
  * SuS says limits have to be unsigned.
@@ -64,30 +64,5 @@
 # define _STK_LIM_MAX		RLIM_INFINITY
 #endif
 
-#ifdef __KERNEL__
-
-/*
- * boot-time rlimit defaults for the init task:
- */
-#define INIT_RLIMITS							\
-{									\
-	[RLIMIT_CPU]		= {  RLIM_INFINITY,  RLIM_INFINITY },	\
-	[RLIMIT_FSIZE]		= {  RLIM_INFINITY,  RLIM_INFINITY },	\
-	[RLIMIT_DATA]		= {  RLIM_INFINITY,  RLIM_INFINITY },	\
-	[RLIMIT_STACK]		= {       _STK_LIM,   _STK_LIM_MAX },	\
-	[RLIMIT_CORE]		= {              0,  RLIM_INFINITY },	\
-	[RLIMIT_RSS]		= {  RLIM_INFINITY,  RLIM_INFINITY },	\
-	[RLIMIT_NPROC]		= {              0,              0 },	\
-	[RLIMIT_NOFILE]		= {       INR_OPEN,       INR_OPEN },	\
-	[RLIMIT_MEMLOCK]	= {    MLOCK_LIMIT,    MLOCK_LIMIT },	\
-	[RLIMIT_AS]		= {  RLIM_INFINITY,  RLIM_INFINITY },	\
-	[RLIMIT_LOCKS]		= {  RLIM_INFINITY,  RLIM_INFINITY },	\
-	[RLIMIT_SIGPENDING]	= { 		0,	       0 },	\
-	[RLIMIT_MSGQUEUE]	= {   MQ_BYTES_MAX,   MQ_BYTES_MAX },	\
-	[RLIMIT_NICE]		= { 0, 0 },				\
-	[RLIMIT_RTPRIO]		= { 0, 0 },				\
-}
-
-#endif	/* __KERNEL__ */
 
 #endif

@@ -1,5 +1,3 @@
-/*	$Id: if_ppp.h,v 1.21 2000/03/27 06:03:36 paulus Exp $	*/
-
 /*
  * if_ppp.h - Point-to-Point Protocol definitions.
  *
@@ -35,7 +33,8 @@
 #ifndef _IF_PPP_H_
 #define _IF_PPP_H_
 
-#include <linux/compiler.h>
+#include <linux/types.h>
+
 
 /*
  * Packet sizes
@@ -95,7 +94,7 @@ struct npioctl {
 
 /* Structure describing a CCP configuration option, for PPPIOCSCOMPRESS */
 struct ppp_option_data {
-	__u8	__user *ptr;
+	__u8	*ptr;
 	__u32	length;
 	int	transmit;
 };
@@ -108,6 +107,21 @@ struct ifpppstatsreq {
 struct ifpppcstatsreq {
 	struct ifreq	      b;
 	struct ppp_comp_stats stats;
+};
+
+/* For PPPIOCGL2TPSTATS */
+struct pppol2tp_ioc_stats {
+	__u16		tunnel_id;	/* redundant */
+	__u16		session_id;	/* if zero, get tunnel stats */
+	__u32		using_ipsec:1;	/* valid only for session_id == 0 */
+	aligned_u64	tx_packets;
+	aligned_u64	tx_bytes;
+	aligned_u64	tx_errors;
+	aligned_u64	rx_packets;
+	aligned_u64	rx_bytes;
+	aligned_u64	rx_seq_discards;
+	aligned_u64	rx_oos_packets;
+	aligned_u64	rx_errors;
 };
 
 #define ifr__name       b.ifr_ifrn.ifrn_name
@@ -146,6 +160,7 @@ struct ifpppcstatsreq {
 #define PPPIOCDISCONN	_IO('t', 57)		/* disconnect channel */
 #define PPPIOCATTCHAN	_IOW('t', 56, int)	/* attach to ppp channel */
 #define PPPIOCGCHAN	_IOR('t', 55, int)	/* get ppp channel number */
+#define PPPIOCGL2TPSTATS _IOR('t', 54, struct pppol2tp_ioc_stats)
 
 #define SIOCGPPPSTATS   (SIOCDEVPRIVATE + 0)
 #define SIOCGPPPVER     (SIOCDEVPRIVATE + 1)	/* NEVER change this!! */

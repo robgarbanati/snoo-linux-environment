@@ -14,7 +14,7 @@ library_names=''
 old_library='libsupc++.a'
 
 # Libraries that this one depends upon.
-dependency_libs=' -L/home/zswan/1tools/build/buildgcc2/arm-none-linux-gnueabi/libstdc++-v3/src -L/home/zswan/1tools/build/buildgcc2/arm-none-linux-gnueabi/libstdc++-v3/src/.libs -lm -L/home/zswan/1tools/build/buildgcc2/./gcc -L/usr/local/arm_linux_4.2/arm-none-linux-gnueabi/bin -L/usr/local/arm_linux_4.2/arm-none-linux-gnueabi/lib -L/usr/local/arm_linux_4.2/lib/gcc/arm-none-linux-gnueabi/4.2.1 -L/usr/local/arm_linux_4.2/lib/gcc/arm-none-linux-gnueabi/4.2.1/../../../../arm-none-linux-gnueabi/lib -lgcc_s -lc -lgcc_s'
+dependency_libs=' -L/home/mike/crosstools/build/gcc-4.2.1/arm-none-linux-gnueabi/libstdc++-v3/src -L/home/mike/crosstools/build/gcc-4.2.1/arm-none-linux-gnueabi/libstdc++-v3/src/.libs -lm -L/home/mike/crosstools/build/gcc-4.2.1/host-x86_64-linux-gnu/gcc -L/usr/local/arm_linux_4.2/arm-none-linux-gnueabi/bin -L/usr/local/arm_linux_4.2/arm-none-linux-gnueabi/lib -L/usr/local/arm_linux_4.2/lib/gcc/arm-none-linux-gnueabi/4.2.1 -L/usr/local/arm_linux_4.2/lib/gcc/arm-none-linux-gnueabi/4.2.1/../../../../arm-none-linux-gnueabi/lib -lgcc_s -lc -lgcc_s'
 
 # Version information for libsupc++.
 current=0

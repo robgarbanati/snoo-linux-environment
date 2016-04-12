@@ -22,10 +22,12 @@
 # undef EDOM
 # undef EILSEQ
 # undef ERANGE
-# include <bits/errno_values.h>
+# include <linux/errno.h>
 
 /* Linux has no ENOTSUP error code.  */
-# define ENOTSUP EOPNOTSUPP
+# ifndef ENOTSUP
+#  define ENOTSUP EOPNOTSUPP
+# endif
 
 /* Older Linux versions also had no ECANCELED error code.  */
 # ifndef ECANCELED

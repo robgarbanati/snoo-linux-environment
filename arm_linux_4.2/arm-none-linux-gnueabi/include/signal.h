@@ -57,12 +57,35 @@ typedef __sigset_t sigset_t;
 #include <bits/types.h>
 #include <bits/signum.h>
 
+/* Fake signal functions.  */
+#define SIG_ERR    ((__sighandler_t) -1) /* Error return.  */
+#define SIG_DFL    ((__sighandler_t) 0)  /* Default action.  */
+#define SIG_IGN    ((__sighandler_t) 1)  /* Ignore signal.  */
+#ifdef __USE_UNIX98
+# define SIG_HOLD  ((__sighandler_t) 2)  /* Add signal to hold mask.  */
+#endif
+/* Biggest signal number + 1 (including real-time signals).  */
+#ifndef _NSIG /* if arch has not defined it in bits/signum.h... */
+# define _NSIG 65
+#endif
+#ifdef __USE_MISC
+# define NSIG _NSIG
+#endif
+/* Real-time signal range */
+#define SIGRTMIN   (__libc_current_sigrtmin())
+#define SIGRTMAX   (__libc_current_sigrtmax())
+/* These are the hard limits of the kernel.  These values should not be
+   used directly at user level.  */
+#ifndef __SIGRTMIN /* if arch has not defined it in bits/signum.h... */
+# define __SIGRTMIN 32
+#endif
+#define __SIGRTMAX (_NSIG - 1)
+
+
 #if defined __USE_XOPEN || defined __USE_XOPEN2K
 # ifndef __pid_t_defined
 typedef __pid_t pid_t;
 #  define __pid_t_defined
-#endif
-#ifdef __USE_XOPEN
 # endif
 # ifndef __uid_t_defined
 typedef __uid_t uid_t;
@@ -73,22 +96,23 @@ typedef __uid_t uid_t;
 
 /* Type of a signal handler.  */
 typedef void (*__sighandler_t) (int);
-
+#if defined __UCLIBC_HAS_OBSOLETE_SYSV_SIGNAL__
 /* The X/Open definition of `signal' specifies the SVID semantic.  Use
    the additional function `sysv_signal' when X/Open compatibility is
    requested.  */
 extern __sighandler_t __sysv_signal (int __sig, __sighandler_t __handler)
      __THROW;
-#ifdef __USE_GNU
+# ifdef __USE_GNU
 extern __sighandler_t sysv_signal (int __sig, __sighandler_t __handler)
      __THROW;
-#endif
+# endif
+#endif /* __UCLIBC_HAS_OBSOLETE_SYSV_SIGNAL__ */
 
 /* Set the handler for the signal SIG to HANDLER, returning the old
    handler, or SIG_ERR on error.
    By default `signal' has the BSD semantic.  */
 __BEGIN_NAMESPACE_STD
-#ifdef __USE_BSD
+#if defined __USE_BSD || !defined __UCLIBC_HAS_OBSOLETE_SYSV_SIGNAL__
 extern __sighandler_t signal (int __sig, __sighandler_t __handler)
      __THROW;
 #else
@@ -103,7 +127,7 @@ extern __sighandler_t __REDIRECT_NTH (signal,
 #endif
 __END_NAMESPACE_STD
 
-#ifdef __USE_XOPEN
+#if defined __USE_XOPEN && defined __UCLIBC_SUSV3_LEGACY__
 /* The X/Open definition of `signal' conflicts with the BSD version.
    So they defined another function `bsd_signal'.  */
 extern __sighandler_t bsd_signal (int __sig, __sighandler_t __handler)
@@ -115,14 +139,14 @@ extern __sighandler_t bsd_signal (int __sig, __sighandler_t __handler)
    If PID is < -1, send SIG to all processes in process group - PID.  */
 #ifdef __USE_POSIX
 extern int kill (__pid_t __pid, int __sig) __THROW;
-#endif /* Use POSIX.  */
+#endif
 
 #if defined __USE_BSD || defined __USE_XOPEN_EXTENDED
 /* Send SIG to all processes in process group PGRP.
    If PGRP is zero, send SIG to all processes in
    the current process's process group.  */
 extern int killpg (__pid_t __pgrp, int __sig) __THROW;
-#endif /* Use BSD || X/Open Unix.  */
+#endif
 
 __BEGIN_NAMESPACE_STD
 /* Raise signal SIG, i.e., send SIG to yourself.  */
@@ -141,7 +165,7 @@ extern int gsignal (int __sig) __THROW;
 extern void psignal (int __sig, __const char *__s);
 #endif /* Use misc.  */
 
-
+#ifdef __UCLIBC_SUSV4_LEGACY__
 /* The `sigpause' function has two different interfaces.  The original
    BSD definition defines the argument as a mask of the signal, while
    the more modern interface in X/Open defines it as the signal
@@ -163,7 +187,7 @@ extern int sigpause (int __mask) __THROW __attribute_deprecated__;
 #  define sigpause(sig) __sigpause ((sig), 1)
 # endif
 #endif
-
+#endif /* __UCLIBC_SUSV4_LEGACY__ */
 
 #ifdef __USE_BSD
 /* None of the following functions should be used anymore.  They are here
@@ -175,19 +199,17 @@ extern int sigpause (int __mask) __THROW __attribute_deprecated__;
 # define sigmask(sig)	__sigmask(sig)
 
 /* Block signals in MASK, returning the old mask.  */
-extern int sigblock (int __mask) __THROW __attribute_deprecated__;
+extern int sigblock (int __mask) __THROW;
+/* collides with libc_hidden_proto: __attribute_deprecated__; */
 
 /* Set the mask of blocked signals to MASK, returning the old mask.  */
-extern int sigsetmask (int __mask) __THROW __attribute_deprecated__;
+extern int sigsetmask (int __mask) __THROW;
+/* collides with libc_hidden_proto: __attribute_deprecated__; */
 
 /* Return currently selected signal mask.  */
 extern int siggetmask (void) __THROW __attribute_deprecated__;
 #endif /* Use BSD.  */
 
-
-#ifdef __USE_MISC
-# define NSIG	_NSIG
-#endif
 
 #ifdef __USE_GNU
 typedef __sighandler_t sighandler_t;
@@ -268,7 +290,7 @@ extern int sigpending (sigset_t *__set) __THROW __nonnull ((1));
 extern int sigwait (__const sigset_t *__restrict __set, int *__restrict __sig)
      __nonnull ((1, 2));
 
-# ifdef __USE_POSIX199309
+# if defined __USE_POSIX199309 && defined __UCLIBC_HAS_REALTIME__
 /* Select any of pending signals from SET and place information in INFO.
 
    This function is a cancellation point and therefore not marked with
@@ -296,12 +318,12 @@ extern int sigqueue (__pid_t __pid, int __sig, __const union sigval __val)
 
 #ifdef __USE_BSD
 
-#ifdef __UCLIBC_HAS_SYS_SIGLIST__
+# ifdef __UCLIBC_HAS_SYS_SIGLIST__
 /* Names of the signals.  This variable exists only for compatibility.
    Use `strsignal' instead (see <string.h>).  */
-#define _sys_siglist sys_siglist
+#  define _sys_siglist sys_siglist
 extern __const char *__const sys_siglist[_NSIG];
-#endif /* __UCLIBC_HAS_SYS_SIGLIST__ */
+# endif
 
 /* Structure passed to `sigvec'.  */
 struct sigvec
@@ -339,22 +361,27 @@ extern int sigreturn (struct sigcontext *__scp) __THROW;
 
 #if defined __USE_BSD || defined __USE_XOPEN_EXTENDED
 
+# ifdef __UCLIBC_SUSV4_LEGACY__
 /* If INTERRUPT is nonzero, make signal SIG interrupt system calls
    (causing them to fail with EINTR); if INTERRUPT is zero, make system
    calls be restarted after signal SIG.  */
 extern int siginterrupt (int __sig, int __interrupt) __THROW;
+# endif
 
 # include <bits/sigstack.h>
 # ifdef __USE_XOPEN
 /* This will define `ucontext_t' and `mcontext_t'.  */
-#  include <ucontext.h>
+/* SuSv4 obsoleted include/ucontext.h */
+#  include <sys/ucontext.h>
 # endif
 
+# if 0
 /* Run signals handlers on the stack specified by SS (if not NULL).
    If OSS is not NULL, it is filled in with the old signal stack status.
    This interface is obsolete and on many platform not implemented.  */
 extern int sigstack (struct sigstack *__ss, struct sigstack *__oss)
      __THROW __attribute_deprecated__;
+# endif
 
 /* Alternate signal handler stack interface.
    This interface should always be preferred over `sigstack'.  */
@@ -363,7 +390,7 @@ extern int sigaltstack (__const struct sigaltstack *__restrict __ss,
 
 #endif /* use BSD or X/Open Unix.  */
 
-#ifdef __USE_XOPEN_EXTENDED
+#if defined __USE_XOPEN_EXTENDED && defined __UCLIBC_HAS_OBSOLETE_BSD_SIGNAL__
 /* Simplified interface for signal management.  */
 
 /* Add SIG to the calling process' signal mask.  */
@@ -384,7 +411,7 @@ extern __sighandler_t sigset (int __sig, __sighandler_t __disp) __THROW;
    be defined here.  */
 # include <bits/pthreadtypes.h>
 # include <bits/sigthread.h>
-#endif /* use Unix98 */
+#endif
 
 /* The following functions are used internally in the C library and in
    other code which need deep insights.  */

@@ -10,11 +10,7 @@
 #ifndef NFSD_EXPORT_H
 #define NFSD_EXPORT_H
 
-#include <asm/types.h>
-#ifdef __KERNEL__
 # include <linux/types.h>
-# include <linux/in.h>
-#endif
 
 /*
  * Important limits for the exports stuff.
@@ -40,81 +36,24 @@
 #define NFSEXP_FSID		0x2000
 #define	NFSEXP_CROSSMOUNT	0x4000
 #define	NFSEXP_NOACL		0x8000	/* reserved for possible ACL related use */
-#define NFSEXP_ALLFLAGS		0xFE3F
-
-
-#ifdef __KERNEL__
-
-struct svc_export {
-	struct cache_head	h;
-	struct auth_domain *	ex_client;
-	int			ex_flags;
-	struct vfsmount *	ex_mnt;
-	struct dentry *		ex_dentry;
-	uid_t			ex_anon_uid;
-	gid_t			ex_anon_gid;
-	int			ex_fsid;
-};
-
-/* an "export key" (expkey) maps a filehandlefragement to an
- * svc_export for a given client.  There can be two per export, one
- * for type 0 (dev/ino), one for type 1 (fsid)
- */
-struct svc_expkey {
-	struct cache_head	h;
-
-	struct auth_domain *	ek_client;
-	int			ek_fsidtype;
-	u32			ek_fsid[3];
-
-	struct vfsmount *	ek_mnt;
-	struct dentry *		ek_dentry;
-};
-
-#define EX_SECURE(exp)		(!((exp)->ex_flags & NFSEXP_INSECURE_PORT))
-#define EX_ISSYNC(exp)		(!((exp)->ex_flags & NFSEXP_ASYNC))
-#define EX_RDONLY(exp)		((exp)->ex_flags & NFSEXP_READONLY)
-#define EX_NOHIDE(exp)		((exp)->ex_flags & NFSEXP_NOHIDE)
-#define EX_WGATHER(exp)		((exp)->ex_flags & NFSEXP_GATHERED_WRITES)
-
-
 /*
- * Function declarations
+ * The NFSEXP_V4ROOT flag causes the kernel to give access only to NFSv4
+ * clients, and only to the single directory that is the root of the
+ * export; further lookup and readdir operations are treated as if every
+ * subdirectory was a mountpoint, and ignored if they are not themselves
+ * exported.  This is used by nfsd and mountd to construct the NFSv4
+ * pseudofilesystem, which provides access only to paths leading to each
+ * exported filesystem.
  */
-void			nfsd_export_init(void);
-void			nfsd_export_shutdown(void);
-void			nfsd_export_flush(void);
-void			exp_readlock(void);
-void			exp_readunlock(void);
-struct svc_export *	exp_get_by_name(struct auth_domain *clp,
-					struct vfsmount *mnt,
-					struct dentry *dentry,
-					struct cache_req *reqp);
-struct svc_export *	exp_parent(struct auth_domain *clp,
-				   struct vfsmount *mnt,
-				   struct dentry *dentry,
-				   struct cache_req *reqp);
-int			exp_rootfh(struct auth_domain *, 
-					char *path, struct knfsd_fh *, int maxsize);
-int			exp_pseudoroot(struct auth_domain *, struct svc_fh *fhp, struct cache_req *creq);
-int			nfserrno(int errno);
+#define	NFSEXP_V4ROOT		0x10000
+/* All flags that we claim to support.  (Note we don't support NOACL.) */
+#define NFSEXP_ALLFLAGS		0x17E3F
 
-extern struct cache_detail svc_export_cache;
+/* The flags that may vary depending on security flavor: */
+#define NFSEXP_SECINFO_FLAGS	(NFSEXP_READONLY | NFSEXP_ROOTSQUASH \
+					| NFSEXP_ALLSQUASH \
+					| NFSEXP_INSECURE_PORT)
 
-static inline void exp_put(struct svc_export *exp)
-{
-	cache_put(&exp->h, &svc_export_cache);
-}
-
-static inline void exp_get(struct svc_export *exp)
-{
-	cache_get(&exp->h);
-}
-extern struct svc_export *
-exp_find(struct auth_domain *clp, int fsid_type, u32 *fsidv,
-	 struct cache_req *reqp);
-
-#endif /* __KERNEL__ */
 
 #endif /* NFSD_EXPORT_H */
 

@@ -15,14 +15,8 @@
 #ifndef _IP6_TABLES_H
 #define _IP6_TABLES_H
 
-#ifdef __KERNEL__
-#include <linux/if.h>
 #include <linux/types.h>
-#include <linux/in6.h>
-#include <linux/ipv6.h>
-#include <linux/skbuff.h>
-#endif
-#include <linux/compiler.h>
+
 #include <linux/netfilter_ipv6.h>
 
 #include <linux/netfilter/x_tables.h>
@@ -44,8 +38,14 @@ struct ip6t_ip6 {
 	char iniface[IFNAMSIZ], outiface[IFNAMSIZ];
 	unsigned char iniface_mask[IFNAMSIZ], outiface_mask[IFNAMSIZ];
 
-	/* ARGH, HopByHop uses 0, so can't do 0 = ANY,
-	   instead IP6T_F_NOPROTO must be set */
+	/* Upper protocol number
+	 * - The allowed value is 0 (any) or protocol number of last parsable
+	 *   header, which is 50 (ESP), 59 (No Next Header), 135 (MH), or
+	 *   the non IPv6 extension headers.
+	 * - The protocol numbers of IPv6 extension headers except of ESP and
+	 *   MH do not match any packets.
+	 * - You also need to set IP6T_FLAGS_PROTO to "flags" to check protocol.
+	 */
 	u_int16_t proto;
 	/* TOS to match iff flags & IP6T_F_TOS */
 	u_int8_t tos;
@@ -82,8 +82,7 @@ struct ip6t_ip6 {
 /* This structure defines each of the firewall rules.  Consists of 3
    parts which are 1) general IP header stuff 2) match specific
    stuff 3) the target to perform if the rule matches */
-struct ip6t_entry
-{
+struct ip6t_entry {
 	struct ip6t_ip6 ipv6;
 
 	/* Mark with fields that we care about. */
@@ -104,21 +103,62 @@ struct ip6t_entry
 	unsigned char elems[0];
 };
 
+/* Standard entry */
+struct ip6t_standard {
+	struct ip6t_entry entry;
+	struct ip6t_standard_target target;
+};
+
+struct ip6t_error_target {
+	struct ip6t_entry_target target;
+	char errorname[IP6T_FUNCTION_MAXNAMELEN];
+};
+
+struct ip6t_error {
+	struct ip6t_entry entry;
+	struct ip6t_error_target target;
+};
+
+#define IP6T_ENTRY_INIT(__size)						       \
+{									       \
+	.target_offset	= sizeof(struct ip6t_entry),			       \
+	.next_offset	= (__size),					       \
+}
+
+#define IP6T_STANDARD_INIT(__verdict)					       \
+{									       \
+	.entry		= IP6T_ENTRY_INIT(sizeof(struct ip6t_standard)),       \
+	.target		= XT_TARGET_INIT(IP6T_STANDARD_TARGET,		       \
+					 sizeof(struct ip6t_standard_target)), \
+	.target.verdict	= -(__verdict) - 1,				       \
+}
+
+#define IP6T_ERROR_INIT							       \
+{									       \
+	.entry		= IP6T_ENTRY_INIT(sizeof(struct ip6t_error)),	       \
+	.target		= XT_TARGET_INIT(IP6T_ERROR_TARGET,		       \
+					 sizeof(struct ip6t_error_target)),    \
+	.target.errorname = "ERROR",					       \
+}
+
 /*
  * New IP firewall options for [gs]etsockopt at the RAW IP level.
  * Unlike BSD Linux inherits IP options so you don't have to use
- * a raw socket for this. Instead we check rights in the calls. */
-#define IP6T_BASE_CTL			XT_BASE_CTL
+ * a raw socket for this. Instead we check rights in the calls.
+ *
+ * ATTENTION: check linux/in6.h before adding new number here.
+ */
+#define IP6T_BASE_CTL			64
 
-#define IP6T_SO_SET_REPLACE		XT_SO_SET_REPLACE
-#define IP6T_SO_SET_ADD_COUNTERS	XT_SO_SET_ADD_COUNTERS
-#define IP6T_SO_SET_MAX			XT_SO_SET_MAX
+#define IP6T_SO_SET_REPLACE		(IP6T_BASE_CTL)
+#define IP6T_SO_SET_ADD_COUNTERS	(IP6T_BASE_CTL + 1)
+#define IP6T_SO_SET_MAX			IP6T_SO_SET_ADD_COUNTERS
 
-#define IP6T_SO_GET_INFO		XT_SO_GET_INFO
-#define IP6T_SO_GET_ENTRIES		XT_SO_GET_ENTRIES
-#define	IP6T_SO_GET_REVISION_MATCH	XT_SO_GET_REVISION_MATCH
-#define	IP6T_SO_GET_REVISION_TARGET	XT_SO_GET_REVISION_TARGET
-#define IP6T_SO_GET_MAX			XT_SO_GET_REVISION_TARGET
+#define IP6T_SO_GET_INFO		(IP6T_BASE_CTL)
+#define IP6T_SO_GET_ENTRIES		(IP6T_BASE_CTL + 1)
+#define IP6T_SO_GET_REVISION_MATCH	(IP6T_BASE_CTL + 4)
+#define IP6T_SO_GET_REVISION_TARGET	(IP6T_BASE_CTL + 5)
+#define IP6T_SO_GET_MAX			IP6T_SO_GET_REVISION_TARGET
 
 /* CONTINUE verdict for targets */
 #define IP6T_CONTINUE XT_CONTINUE
@@ -145,8 +185,7 @@ struct ip6t_entry
 #define IP6T_UDP_INV_MASK	XT_UDP_INV_MASK
 
 /* ICMP matching stuff */
-struct ip6t_icmp
-{
+struct ip6t_icmp {
 	u_int8_t type;				/* type to match */
 	u_int8_t code[2];			/* range of code */
 	u_int8_t invflags;			/* Inverse flags */
@@ -156,8 +195,7 @@ struct ip6t_icmp
 #define IP6T_ICMP_INV	0x01	/* Invert the sense of type/code test */
 
 /* The argument to IP6T_SO_GET_INFO */
-struct ip6t_getinfo
-{
+struct ip6t_getinfo {
 	/* Which table: caller fills this in. */
 	char name[IP6T_TABLE_MAXNAMELEN];
 
@@ -166,10 +204,10 @@ struct ip6t_getinfo
 	unsigned int valid_hooks;
 
 	/* Hook entry points: one per netfilter hook. */
-	unsigned int hook_entry[NF_IP6_NUMHOOKS];
+	unsigned int hook_entry[NF_INET_NUMHOOKS];
 
 	/* Underflow points. */
-	unsigned int underflow[NF_IP6_NUMHOOKS];
+	unsigned int underflow[NF_INET_NUMHOOKS];
 
 	/* Number of entries */
 	unsigned int num_entries;
@@ -179,8 +217,7 @@ struct ip6t_getinfo
 };
 
 /* The argument to IP6T_SO_SET_REPLACE. */
-struct ip6t_replace
-{
+struct ip6t_replace {
 	/* Which table. */
 	char name[IP6T_TABLE_MAXNAMELEN];
 
@@ -195,16 +232,16 @@ struct ip6t_replace
 	unsigned int size;
 
 	/* Hook entry points. */
-	unsigned int hook_entry[NF_IP6_NUMHOOKS];
+	unsigned int hook_entry[NF_INET_NUMHOOKS];
 
 	/* Underflow points. */
-	unsigned int underflow[NF_IP6_NUMHOOKS];
+	unsigned int underflow[NF_INET_NUMHOOKS];
 
 	/* Information about old entries: */
 	/* Number of counters (must be equal to current number of entries). */
 	unsigned int num_counters;
 	/* The old entries' counters. */
-	struct xt_counters __user *counters;
+	struct xt_counters *counters;
 
 	/* The entries (hang off end: not really an array). */
 	struct ip6t_entry entries[0];
@@ -214,8 +251,7 @@ struct ip6t_replace
 #define ip6t_counters_info xt_counters_info
 
 /* The argument to IP6T_SO_GET_ENTRIES. */
-struct ip6t_get_entries
-{
+struct ip6t_get_entries {
 	/* Which table: user fills this in. */
 	char name[IP6T_TABLE_MAXNAMELEN];
 
@@ -239,81 +275,15 @@ ip6t_get_target(struct ip6t_entry *e)
 }
 
 /* fn returns 0 to continue iteration */
-#define IP6T_MATCH_ITERATE(e, fn, args...)	\
-({						\
-	unsigned int __i;			\
-	int __ret = 0;				\
-	struct ip6t_entry_match *__m;		\
-						\
-	for (__i = sizeof(struct ip6t_entry);	\
-	     __i < (e)->target_offset;		\
-	     __i += __m->u.match_size) {	\
-		__m = (void *)(e) + __i;	\
-						\
-		__ret = fn(__m , ## args);	\
-		if (__ret != 0)			\
-			break;			\
-	}					\
-	__ret;					\
-})
+#define IP6T_MATCH_ITERATE(e, fn, args...) \
+	XT_MATCH_ITERATE(struct ip6t_entry, e, fn, ## args)
 
 /* fn returns 0 to continue iteration */
-#define IP6T_ENTRY_ITERATE(entries, size, fn, args...)		\
-({								\
-	unsigned int __i;					\
-	int __ret = 0;						\
-	struct ip6t_entry *__e;					\
-								\
-	for (__i = 0; __i < (size); __i += __e->next_offset) {	\
-		__e = (void *)(entries) + __i;			\
-								\
-		__ret = fn(__e , ## args);			\
-		if (__ret != 0)					\
-			break;					\
-	}							\
-	__ret;							\
-})
+#define IP6T_ENTRY_ITERATE(entries, size, fn, args...) \
+	XT_ENTRY_ITERATE(struct ip6t_entry, entries, size, fn, ## args)
 
 /*
  *	Main firewall chains definitions and global var's definitions.
  */
 
-#ifdef __KERNEL__
-
-#include <linux/init.h>
-extern void ip6t_init(void) __init;
-
-#define ip6t_register_target(tgt) 		\
-({	(tgt)->family = AF_INET6;		\
- 	xt_register_target(tgt); })
-#define ip6t_unregister_target(tgt) xt_unregister_target(tgt)
-
-#define ip6t_register_match(match)		\
-({	(match)->family = AF_INET6;		\
-	xt_register_match(match); })
-#define ip6t_unregister_match(match) xt_unregister_match(match)
-
-extern int ip6t_register_table(struct ip6t_table *table,
-			       const struct ip6t_replace *repl);
-extern void ip6t_unregister_table(struct ip6t_table *table);
-extern unsigned int ip6t_do_table(struct sk_buff **pskb,
-				  unsigned int hook,
-				  const struct net_device *in,
-				  const struct net_device *out,
-				  struct ip6t_table *table,
-				  void *userdata);
-
-/* Check for an extension */
-extern int ip6t_ext_hdr(u8 nexthdr);
-/* find specified header and get offset to it */
-extern int ipv6_find_hdr(const struct sk_buff *skb, unsigned int *offset,
-			 int target, unsigned short *fragoff);
-
-extern int ip6_masked_addrcmp(const struct in6_addr *addr1,
-			      const struct in6_addr *mask,
-			      const struct in6_addr *addr2);
-
-#define IP6T_ALIGN(s) (((s) + (__alignof__(struct ip6t_entry)-1)) & ~(__alignof__(struct ip6t_entry)-1))
-
-#endif /*__KERNEL__*/
 #endif /* _IP6_TABLES_H */

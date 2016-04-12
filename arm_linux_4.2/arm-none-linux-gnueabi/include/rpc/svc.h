@@ -199,7 +199,6 @@ extern void xprt_register (SVCXPRT *__xprt) __THROW;
  */
 extern void xprt_unregister (SVCXPRT *__xprt) __THROW;
 
-
 /*
  * When the service routine is called, it must first check to see if it
  * knows about the procedure;  if not, it should call svcerr_noproc

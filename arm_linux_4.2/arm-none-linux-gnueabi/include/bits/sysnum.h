@@ -880,6 +880,159 @@
 #undef __NR_set_mempolicy
 #define __NR_set_mempolicy (0 +321)
 #define SYS_set_mempolicy __NR_set_mempolicy
+#undef __NR_openat
+#define __NR_openat (0 +322)
+#define SYS_openat __NR_openat
+#undef __NR_mkdirat
+#define __NR_mkdirat (0 +323)
+#define SYS_mkdirat __NR_mkdirat
+#undef __NR_mknodat
+#define __NR_mknodat (0 +324)
+#define SYS_mknodat __NR_mknodat
+#undef __NR_fchownat
+#define __NR_fchownat (0 +325)
+#define SYS_fchownat __NR_fchownat
+#undef __NR_futimesat
+#define __NR_futimesat (0 +326)
+#define SYS_futimesat __NR_futimesat
+#undef __NR_fstatat64
+#define __NR_fstatat64 (0 +327)
+#define SYS_fstatat64 __NR_fstatat64
+#undef __NR_unlinkat
+#define __NR_unlinkat (0 +328)
+#define SYS_unlinkat __NR_unlinkat
+#undef __NR_renameat
+#define __NR_renameat (0 +329)
+#define SYS_renameat __NR_renameat
+#undef __NR_linkat
+#define __NR_linkat (0 +330)
+#define SYS_linkat __NR_linkat
+#undef __NR_symlinkat
+#define __NR_symlinkat (0 +331)
+#define SYS_symlinkat __NR_symlinkat
+#undef __NR_readlinkat
+#define __NR_readlinkat (0 +332)
+#define SYS_readlinkat __NR_readlinkat
+#undef __NR_fchmodat
+#define __NR_fchmodat (0 +333)
+#define SYS_fchmodat __NR_fchmodat
+#undef __NR_faccessat
+#define __NR_faccessat (0 +334)
+#define SYS_faccessat __NR_faccessat
+#undef __NR_pselect6
+#define __NR_pselect6 (0 +335)
+#define SYS_pselect6 __NR_pselect6
+#undef __NR_ppoll
+#define __NR_ppoll (0 +336)
+#define SYS_ppoll __NR_ppoll
+#undef __NR_unshare
+#define __NR_unshare (0 +337)
+#define SYS_unshare __NR_unshare
+#undef __NR_set_robust_list
+#define __NR_set_robust_list (0 +338)
+#define SYS_set_robust_list __NR_set_robust_list
+#undef __NR_get_robust_list
+#define __NR_get_robust_list (0 +339)
+#define SYS_get_robust_list __NR_get_robust_list
+#undef __NR_splice
+#define __NR_splice (0 +340)
+#define SYS_splice __NR_splice
+#undef __NR_arm_sync_file_range
+#define __NR_arm_sync_file_range (0 +341)
+#define SYS_arm_sync_file_range __NR_arm_sync_file_range
+#undef __NR_sync_file_range2
+#define __NR_sync_file_range2 (0 +341)
+#define SYS_sync_file_range2 __NR_sync_file_range2
+#undef __NR_tee
+#define __NR_tee (0 +342)
+#define SYS_tee __NR_tee
+#undef __NR_vmsplice
+#define __NR_vmsplice (0 +343)
+#define SYS_vmsplice __NR_vmsplice
+#undef __NR_move_pages
+#define __NR_move_pages (0 +344)
+#define SYS_move_pages __NR_move_pages
+#undef __NR_getcpu
+#define __NR_getcpu (0 +345)
+#define SYS_getcpu __NR_getcpu
+#undef __NR_epoll_pwait
+#define __NR_epoll_pwait (0 +346)
+#define SYS_epoll_pwait __NR_epoll_pwait
+#undef __NR_kexec_load
+#define __NR_kexec_load (0 +347)
+#define SYS_kexec_load __NR_kexec_load
+#undef __NR_utimensat
+#define __NR_utimensat (0 +348)
+#define SYS_utimensat __NR_utimensat
+#undef __NR_signalfd
+#define __NR_signalfd (0 +349)
+#define SYS_signalfd __NR_signalfd
+#undef __NR_timerfd_create
+#define __NR_timerfd_create (0 +350)
+#define SYS_timerfd_create __NR_timerfd_create
+#undef __NR_eventfd
+#define __NR_eventfd (0 +351)
+#define SYS_eventfd __NR_eventfd
+#undef __NR_fallocate
+#define __NR_fallocate (0 +352)
+#define SYS_fallocate __NR_fallocate
+#undef __NR_timerfd_settime
+#define __NR_timerfd_settime (0 +353)
+#define SYS_timerfd_settime __NR_timerfd_settime
+#undef __NR_timerfd_gettime
+#define __NR_timerfd_gettime (0 +354)
+#define SYS_timerfd_gettime __NR_timerfd_gettime
+#undef __NR_signalfd4
+#define __NR_signalfd4 (0 +355)
+#define SYS_signalfd4 __NR_signalfd4
+#undef __NR_eventfd2
+#define __NR_eventfd2 (0 +356)
+#define SYS_eventfd2 __NR_eventfd2
+#undef __NR_epoll_create1
+#define __NR_epoll_create1 (0 +357)
+#define SYS_epoll_create1 __NR_epoll_create1
+#undef __NR_dup3
+#define __NR_dup3 (0 +358)
+#define SYS_dup3 __NR_dup3
+#undef __NR_pipe2
+#define __NR_pipe2 (0 +359)
+#define SYS_pipe2 __NR_pipe2
+#undef __NR_inotify_init1
+#define __NR_inotify_init1 (0 +360)
+#define SYS_inotify_init1 __NR_inotify_init1
+#undef __NR_preadv
+#define __NR_preadv (0 +361)
+#define SYS_preadv __NR_preadv
+#undef __NR_pwritev
+#define __NR_pwritev (0 +362)
+#define SYS_pwritev __NR_pwritev
+#undef __NR_rt_tgsigqueueinfo
+#define __NR_rt_tgsigqueueinfo (0 +363)
+#define SYS_rt_tgsigqueueinfo __NR_rt_tgsigqueueinfo
+#undef __NR_perf_event_open
+#define __NR_perf_event_open (0 +364)
+#define SYS_perf_event_open __NR_perf_event_open
+#undef __NR_recvmmsg
+#define __NR_recvmmsg (0 +365)
+#define SYS_recvmmsg __NR_recvmmsg
+#undef __ARM_NR_BASE
+#define __ARM_NR_BASE (0 +0x0f0000)
+#define SYS_BASE __ARM_NR_BASE
+#undef __ARM_NR_breakpoint
+#define __ARM_NR_breakpoint ((0 +0x0f0000)+1)
+#define SYS_breakpoint __ARM_NR_breakpoint
+#undef __ARM_NR_cacheflush
+#define __ARM_NR_cacheflush ((0 +0x0f0000)+2)
+#define SYS_cacheflush __ARM_NR_cacheflush
+#undef __ARM_NR_usr26
+#define __ARM_NR_usr26 ((0 +0x0f0000)+3)
+#define SYS_usr26 __ARM_NR_usr26
+#undef __ARM_NR_usr32
+#define __ARM_NR_usr32 ((0 +0x0f0000)+4)
+#define SYS_usr32 __ARM_NR_usr32
+#undef __ARM_NR_set_tls
+#define __ARM_NR_set_tls ((0 +0x0f0000)+5)
+#define SYS_set_tls __ARM_NR_set_tls
 #undef __NR_time
 #undef __NR_umount
 #undef __NR_stime

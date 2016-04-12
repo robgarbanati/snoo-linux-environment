@@ -31,7 +31,7 @@
 #define	_ASSERT_H	1
 #include <features.h>
 
-#if defined __cplusplus && __GNUC_PREREQ(2,95)
+#if defined __cplusplus && __GNUC_PREREQ (2,95)
 # define __ASSERT_VOID_CAST static_cast<void>
 #else
 # define __ASSERT_VOID_CAST (void)
@@ -51,25 +51,21 @@
 __BEGIN_DECLS
 
 /* This prints an "Assertion failed" message and aborts.  */
-extern void __assert __P((const char *, const char *, int, const char *));
+extern void __assert(const char *, const char *, unsigned int, const char *)
+	__THROW __attribute__ ((__noreturn__));
 
 __END_DECLS
 
 # define assert(expr) \
-  (__ASSERT_VOID_CAST ((expr) ? 0 :					      \
-		       (__assert (__STRING(expr), __FILE__, __LINE__,    \
-				       __ASSERT_FUNCTION), 0)))
+  (__ASSERT_VOID_CAST ((expr) ? 0 :								\
+		       (__assert (__STRING(expr), __FILE__, __LINE__, __ASSERT_FUNCTION), 0)))
 
-/* Define some temporaries to workaround tinyx makedepend bug */
-#define	__GNUC_PREREQ_2_6	__GNUC_PREREQ(2, 6)
-#define	__GNUC_PREREQ_2_4	__GNUC_PREREQ(2, 4)
 /* Version 2.4 and later of GCC define a magical variable `__PRETTY_FUNCTION__'
    which contains the name of the function currently being defined.
    This is broken in G++ before version 2.6.
    C9x has a similar variable called __func__, but prefer the GCC one since
    it demangles C++ function names.  */
-
-# if defined __cplusplus ? __GNUC_PREREQ_2_6 : __GNUC_PREREQ_2_4
+# if defined __cplusplus ? __GNUC_PREREQ (2, 6) : __GNUC_PREREQ (2, 4)
 #   define __ASSERT_FUNCTION	__PRETTY_FUNCTION__
 # else
 #  if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L

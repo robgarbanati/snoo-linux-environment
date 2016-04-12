@@ -7,6 +7,8 @@
 #ifndef _LINUX_INOTIFY_H
 #define _LINUX_INOTIFY_H
 
+/* For O_CLOEXEC and O_NONBLOCK */
+#include <linux/fcntl.h>
 #include <linux/types.h>
 
 /*
@@ -63,62 +65,9 @@ struct inotify_event {
 			 IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_DELETE_SELF | \
 			 IN_MOVE_SELF)
 
-#ifdef __KERNEL__
+/* Flags for sys_inotify_init1.  */
+#define IN_CLOEXEC O_CLOEXEC
+#define IN_NONBLOCK O_NONBLOCK
 
-#include <linux/dcache.h>
-#include <linux/fs.h>
-#include <linux/config.h>
-
-#ifdef CONFIG_INOTIFY
-
-extern void inotify_d_instantiate(struct dentry *, struct inode *);
-extern void inotify_d_move(struct dentry *);
-extern void inotify_inode_queue_event(struct inode *, __u32, __u32,
-				      const char *);
-extern void inotify_dentry_parent_queue_event(struct dentry *, __u32, __u32,
-					      const char *);
-extern void inotify_unmount_inodes(struct list_head *);
-extern void inotify_inode_is_dead(struct inode *);
-extern u32 inotify_get_cookie(void);
-
-#else
-
-static inline void inotify_d_instantiate(struct dentry *dentry,
-					struct inode *inode)
-{
-}
-
-static inline void inotify_d_move(struct dentry *dentry)
-{
-}
-
-static inline void inotify_inode_queue_event(struct inode *inode,
-					     __u32 mask, __u32 cookie,
-					     const char *filename)
-{
-}
-
-static inline void inotify_dentry_parent_queue_event(struct dentry *dentry,
-						     __u32 mask, __u32 cookie,
-						     const char *filename)
-{
-}
-
-static inline void inotify_unmount_inodes(struct list_head *list)
-{
-}
-
-static inline void inotify_inode_is_dead(struct inode *inode)
-{
-}
-
-static inline u32 inotify_get_cookie(void)
-{
-	return 0;
-}
-
-#endif	/* CONFIG_INOTIFY */
-
-#endif	/* __KERNEL __ */
 
 #endif	/* _LINUX_INOTIFY_H */

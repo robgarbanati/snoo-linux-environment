@@ -54,6 +54,7 @@ struct rmtcallargs {
 extern bool_t xdr_rmtcall_args (XDR *__xdrs, struct rmtcallargs *__crp)
      __THROW;
 
+
 struct rmtcallres {
 	u_long *port_ptr;
 	u_long resultslen;

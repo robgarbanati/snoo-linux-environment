@@ -9,6 +9,8 @@
 
 #endif /* __STRUCT_EXEC_OVERRIDE__ */
 
+#ifndef __ASSEMBLY__
+
 /* these go in the N_MACHTYPE field */
 enum machine_type {
 #if defined (M_OLDSUN2)
@@ -128,12 +130,12 @@ enum machine_type {
 #endif
 
 #ifdef linux
-#include <asm/page.h>
+#include <unistd.h>
 #if defined(__i386__) || defined(__mc68000__)
 #define SEGMENT_SIZE	1024
 #else
 #ifndef SEGMENT_SIZE
-#define SEGMENT_SIZE	PAGE_SIZE
+#define SEGMENT_SIZE   getpagesize()
 #endif
 #endif
 #endif
@@ -264,5 +266,5 @@ struct relocation_info
 };
 #endif /* no N_RELOCATION_INFO_DECLARED.  */
 
-
+#endif /*__ASSEMBLY__ */
 #endif /* __A_OUT_GNU_H__ */

@@ -2,7 +2,7 @@
 #define _ASM_GENERIC_ERRNO_H
 
 #include <asm-generic/errno-base.h>
-//#define __errno EEXIST//zswan
+
 #define	EDEADLK		35	/* Resource deadlock would occur */
 #define	ENAMETOOLONG	36	/* File name too long */
 #define	ENOLCK		37	/* No record locks available */
@@ -105,5 +105,7 @@
 /* for robust mutexes */
 #define	EOWNERDEAD	130	/* Owner died */
 #define	ENOTRECOVERABLE	131	/* State not recoverable */
+
+#define ERFKILL		132	/* Operation not possible due to RF-kill */
 
 #endif

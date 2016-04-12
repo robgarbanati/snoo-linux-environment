@@ -132,6 +132,10 @@ struct rpc_err {
 typedef struct CLIENT CLIENT;
 struct CLIENT {
   AUTH	*cl_auth;		 /* authenticator */
+  /* not sure whether non-const-ness is a part of the spec... if it is,
+   * enclose "const" in #ifdef _LIBC / #endif
+   * to make it effective only for libc compile */
+  const
   struct clnt_ops {
     enum clnt_stat (*cl_call) (CLIENT *, u_long, xdrproc_t, caddr_t, xdrproc_t,
 			       caddr_t, struct timeval);
@@ -341,8 +345,6 @@ extern CLIENT *clntudp_bufcreate (struct sockaddr_in *__raddr,
 				  u_int __sendsz, u_int __recvsz) __THROW;
 
 
-
-
 /*
  * AF_UNIX based rpc
  * CLIENT *
@@ -383,6 +385,7 @@ extern void clnt_perror (CLIENT *__clnt, __const char *__msg);
 							/* stderr */
 extern char *clnt_sperror (CLIENT *__clnt, __const char *__msg) __THROW;
 							/* string */
+
 
 /*
  * If a creation fails, the following allows the user to figure out why.

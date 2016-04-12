@@ -1,5 +1,5 @@
 /* Minimum guaranteed maximum values for system limits.  Linux version.
-   Copyright (C) 1993-1998,2000,2002,2003,2004 Free Software Foundation, Inc.
+   Copyright (C) 1993-1998,2000,2002-2004,2008 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,6 +31,9 @@
 #ifndef OPEN_MAX
 # define __undef_OPEN_MAX
 #endif
+#ifndef ARG_MAX
+# define __undef_ARG_MAX
+#endif
 
 /* The kernel sources contain a file with all the needed information.  */
 #include <linux/limits.h>
@@ -50,6 +53,11 @@
 # undef OPEN_MAX
 # undef __undef_OPEN_MAX
 #endif
+/* Have to remove ARG_MAX?  */
+#ifdef __undef_ARG_MAX
+# undef ARG_MAX
+# undef __undef_ARG_MAX
+#endif
 
 /* The number of data keys per process.  */
 #define _POSIX_THREAD_KEYS_MAX	128
@@ -63,6 +71,8 @@
 
 /* The number of threads per process.  */
 #define _POSIX_THREAD_THREADS_MAX	64
+/* We have no predefined limit on the number of threads.  */
+#undef PTHREAD_THREADS_MAX
 
 /* Maximum amount by which a process can descrease its asynchronous I/O
    priority level.  */
@@ -85,3 +95,6 @@
 
 /* Maximum message queue priority level.  */
 #define MQ_PRIO_MAX		32768
+
+/* Maximum value the semaphore can have.  */
+#define SEM_VALUE_MAX   (2147483647)

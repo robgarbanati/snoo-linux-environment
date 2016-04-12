@@ -36,14 +36,6 @@
 #ifndef _RPC_XDR_H
 #define _RPC_XDR_H 1
 
-#ifdef _LIBC
-/* Some adjustments to make the libc source from glibc
- * compile more easily with uClibc... */
-# ifndef __FORCE_GLIBC
-#  define __FORCE_GLIBC
-# endif
-# define _(X)	X
-#endif
 #include <features.h>
 #include <sys/types.h>
 #include <rpc/types.h>
