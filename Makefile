@@ -12,8 +12,8 @@ packages: ## get dependencies from debian servers
 arm-tools: ## install arm toolchain in /usr/local
 	echo export PATH="/usr/local/arm_linux_4.2/bin:$$PATH" >> ~/.bashrc
 	source ~/.bashrc
-	echo copying arm_linux_4.2 into /usr/local/
-	cp -RP arm_linux_4.2 /usr/local/
+	echo linking arm_linux_4.2 into /usr/local/
+	ln -s `pwd`/arm_linux_4.2/ /usr/local/
 
 .PHONY: help
 help:
